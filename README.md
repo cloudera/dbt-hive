@@ -19,6 +19,10 @@ Clone the repository
 cd dbt-hive
 pip3 install --user .
 ```
+or install from pypip
+```
+pip3 install dbt-hive
+```
 
 ### Sample profile
 ```
