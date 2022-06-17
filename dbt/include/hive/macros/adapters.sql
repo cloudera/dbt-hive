@@ -84,7 +84,21 @@
     {{ sql }}
 {% endmacro %}
 
+
+{% macro properties_clause(properties) %}
+  {%- if properties is not none -%}
+      TBLPROPERTIES (
+          {%- for key, value in properties.items() -%}
+            "{{ key }}" = "{{ value }}"
+            {%- if not loop.last -%}{{ ',\n  ' }}{%- endif -%}
+          {%- endfor -%}
+      )
+  {%- endif -%}
+{%- endmacro -%}
+
+
 {% macro hive__create_table_as(temporary, relation, sql) -%}
+  {%- set _properties = config.get('properties') -%}
   {% if temporary -%}
     {{ create_temporary_view(relation, sql) }}
   {%- else -%}
@@ -99,6 +113,7 @@
     {{ clustered_cols(label="clustered by") }}
     {{ location_clause() }}
     {{ comment_clause() }}
+    {{ properties_clause(_properties) }}
     as
       {{ sql }}
   {%- endif %}

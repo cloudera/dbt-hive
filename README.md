@@ -14,11 +14,10 @@ Currently, only support Hive3
    - snapshot
 
 ### Install
+Clone the repository
 ```
 cd dbt-hive
-python3 setup.py clean
-python3 setup.py install --user
-pip3 list installed | grep dbt-hive
+pip3 install --user .
 ```
 
 ### Sample profile
@@ -32,5 +31,5 @@ dlx-hive:
        user: "{{ env_var('HIVE_USER') }}"
        password: "{{ env_var('HIVE_PASSWORD') }}"
        schema: my_schema
-       host: 172.31.0.16
+       host: 127.0.0.1
 ```
