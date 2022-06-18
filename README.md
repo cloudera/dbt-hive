@@ -21,7 +21,7 @@ pip3 install --user .
 ```
 or install from pypip
 ```
-pip3 install dbt-hive
+pip3 install --user dbt-hive
 ```
 
 ### Sample profile
