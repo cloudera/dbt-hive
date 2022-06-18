@@ -26,7 +26,7 @@ pip3 install --user dbt-hive
 
 ### Sample profile
 ```
-dlx-hive:
+hive-exp:
   target: dev
   outputs:
      dev:
