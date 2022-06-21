@@ -18,7 +18,9 @@
 
   {% if strategy == 'insert_overwrite' and partition_by %}
     {% call statement() %}
-      set hive.sql.sources.partitionOverwriteMode = DYNAMIC
+        -- SET hive.exec.dynamic.partition=true
+        -- SET hive.exec.dynamic.partition.mode=nonstrict
+        SELECT 1
     {% endcall %}
   {% endif %}
 
