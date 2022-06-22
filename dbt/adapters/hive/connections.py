@@ -12,8 +12,8 @@ from datetime import datetime
 import sqlparams
 
 from hologram.helpers import StrEnum
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Any, Optional, Dict
 import base64
 import time
 
@@ -32,6 +32,7 @@ class HiveCredentials(Credentials):
     user: Optional[str] = None
     password: Optional[str] = None
     auth: Optional[str] = None
+    session_properties: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def __pre_deserialize__(cls, data):
@@ -147,6 +148,7 @@ class HiveConnectionManager(SQLConnectionManager):
            return connection
 
         credentials = connection.credentials
+        configuration = {k: str(v) for k,v in credentials.session_properties.copy().items()}
 
         # add configuration to yaml
         hive_conn = hive.Connection(
@@ -157,13 +159,14 @@ class HiveConnectionManager(SQLConnectionManager):
             auth=credentials.auth,
 
             # need to parameterize those
-            configuration = {
-                'hive.groupby.orderby.position.alias':'true',
-                'hive.vectorized.execution.enabled':'false',
-                'hive.vectorized.execution.reduce.enabled':'false',
-                'hive.exec.dynamic.partition':'true',
-                'hive.exec.dynamic.partition.mode':'nonstrict'
-            }
+            # configuration = {
+            #     'hive.groupby.orderby.position.alias':'true',
+            #     'hive.vectorized.execution.enabled':'false',
+            #     'hive.vectorized.execution.reduce.enabled':'false',
+            #     'hive.exec.dynamic.partition':'true',
+            #     'hive.exec.dynamic.partition.mode':'nonstrict'
+            # }
+            configuration = configuration
         )
 
         connection.state = ConnectionState.OPEN

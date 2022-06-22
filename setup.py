@@ -3,7 +3,7 @@ from setuptools import find_namespace_packages, setup
 
 package_name = "dbt-hive"
 # make sure this always matches dbt/adapters/hive/__version__.py
-package_version = "1.1.0-1"
+package_version = "1.1.0-2"
 description = """The experient hive adapter plugin for dbt"""
 
 setup(

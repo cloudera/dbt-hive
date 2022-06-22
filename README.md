@@ -29,11 +29,18 @@ pip3 install --user dbt-hive
 hive-exp:
   target: dev
   outputs:
-     dev:
-       type: hive
-       auth: LDAP
-       user: "{{ env_var('HIVE_USER') }}"
-       password: "{{ env_var('HIVE_PASSWORD') }}"
-       schema: my_schema
-       host: 127.0.0.1
+  dev:
+    type: hive
+    auth: LDAP
+    user: "{{ env_var('HIVE_USER') }}"
+    password: "{{ env_var('HIVE_PASSWORD') }}"
+    schema: my_schema
+    host: 127.0.0.1
+    thread: 1
+    session_properties:
+        hive.groupby.orderby.position.alias: true
+        hive.vectorized.execution.enabled: false
+        hive.vectorized.execution.reduce.enabled: false
+        hive.exec.dynamic.partition: true
+        hive.exec.dynamic.partition.mode: "nonstrict"
 ```
