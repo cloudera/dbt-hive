@@ -26,6 +26,7 @@ setup(
     },
     install_requires=[
         "dbt-core==1.1.0",
-        "setuptools>=40.3.0"
+        "setuptools>=40.3.0",
+        "impyla>=0.18a5"
     ]
 )
