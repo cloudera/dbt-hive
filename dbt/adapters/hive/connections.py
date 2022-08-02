@@ -8,6 +8,8 @@ from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.utils import DECIMALS
 from dbt.adapters.hive import __version__
 
+from dbt.contracts.connection import AdapterResponse
+
 from datetime import datetime
 import sqlparams
 
@@ -17,22 +19,25 @@ from typing import Any, Optional, Dict
 import base64
 import time
 
-from pyhive import hive
+import impala.dbapi
 
 NUMBERS = DECIMALS + (int, float)
 
-
+DEFAULT_HIVE_PORT = 10000
 
 @dataclass
 class HiveCredentials(Credentials):
     # Add credentials members here, like:
     host: str = 'localhost'
     schema: str = None
+    port: Optional[int] = DEFAULT_HIVE_PORT
     database: Optional[str] = None
     user: Optional[str] = None
     password: Optional[str] = None
-    auth: Optional[str] = None
-    session_properties: Dict[str, Any] = field(default_factory=dict)
+    auth_type: Optional[str] = None
+    use_ssl: Optional[bool] = True
+    use_http_transport: Optional[bool] = True
+    http_path: Optional[str] = None
 
     @classmethod
     def __pre_deserialize__(cls, data):
@@ -148,26 +153,24 @@ class HiveConnectionManager(SQLConnectionManager):
            return connection
 
         credentials = connection.credentials
-        configuration = {k: str(v) for k,v in credentials.session_properties.copy().items()}
 
         # add configuration to yaml
-        hive_conn = hive.Connection(
-            host=credentials.host,
-            # database=credentials.schema,  # in hive schema = database
-            username=credentials.user,
-            password=credentials.password,
-            auth=credentials.auth,
-
-            # need to parameterize those
-            # configuration = {
-            #     'hive.groupby.orderby.position.alias':'true',
-            #     'hive.vectorized.execution.enabled':'false',
-            #     'hive.vectorized.execution.reduce.enabled':'false',
-            #     'hive.exec.dynamic.partition':'true',
-            #     'hive.exec.dynamic.partition.mode':'nonstrict'
-            # }
-            configuration = configuration
-        )
+        if (not credentials.auth_type):
+           hive_conn = impala.dbapi.connect(
+                         host=credentials.host, 
+                         port=credentials.port
+                   )
+        elif (credentials.auth_type.upper() == 'LDAP'):
+           hive_conn = impala.dbapi.connect(
+                         host=credentials.host,
+                         port=credentials.port,
+                         auth_mechanism='LDAP',
+                         use_http_transport=credentials.use_http_transport,
+                         user=credentials.user,
+                         password=credentials.password,
+                         use_ssl=credentials.use_ssl,
+                         http_path=credentials.http_path
+                   )
 
         connection.state = ConnectionState.OPEN
         connection.handle = HiveConnectionWrapper(hive_conn)
@@ -195,7 +198,10 @@ class HiveConnectionManager(SQLConnectionManager):
 
     @classmethod
     def get_response(cls, cursor):
-        return 'OK'
+        message = 'OK'
+        return AdapterResponse(
+            _message=message
+        )
 
     # No transactions on Hive....
     def add_begin_query(self, *args, **kwargs):
