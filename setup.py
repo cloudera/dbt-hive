@@ -33,7 +33,7 @@ def _get_dbt_core_version():
 package_name = "dbt-hive"
 # make sure this always matches dbt/adapters/hive/__version__.py
 package_version = "1.1.0b3"
-description = """The experient hive adapter plugin for dbt"""
+description = """The Hive adapter plugin for dbt"""
 
 dbt_core_version = _get_dbt_core_version()
 
@@ -43,9 +43,9 @@ setup(
     description=description,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    author='Nguyen Huu Bach',
-    author_email='bachng@gmail.com',
-    url='https://github.com/bachng2017/dbt-hive',
+    author="Cloudera",
+    author_email="innovation-feedback@cloudera.com",
+    url="https://github.com/cloudera/dbt-hive",
     packages=find_namespace_packages(include=['dbt', 'dbt.*']),
     package_data={
         "dbt": [
