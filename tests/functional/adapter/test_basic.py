@@ -14,40 +14,40 @@ from dbt.tests.adapter.basic.test_snapshot_check_cols import BaseSnapshotCheckCo
 from dbt.tests.adapter.basic.test_snapshot_timestamp import BaseSnapshotTimestamp
 from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
 
-class TestSimpleMaterializationsMyAdapter(BaseSimpleMaterializations):
+class TestSimpleMaterializationsHive(BaseSimpleMaterializations):
    pass
 
 
-class TestSingularTestsMyAdapter(BaseSingularTests):
+class TestSingularTestsHive(BaseSingularTests):
    pass
 
 
 # NG
 # ephemeral with CTE does not work with hive
-# class TestSingularTestsEphemeralMyAdapter(BaseSingularTestsEphemeral):
+# class TestSingularTestsEphemeralHive(BaseSingularTestsEphemeral):
 #   pass
 
-class TestEmptyMyAdapter(BaseEmpty):
+class TestEmptyHive(BaseEmpty):
    pass
 
 
-class TestEphemeralMyAdapter(BaseEphemeral):
+class TestEphemeralHive(BaseEphemeral):
    pass
 # 
 # 
-class TestIncrementalMyAdapter(BaseIncremental):
+class TestIncrementalHive(BaseIncremental):
    pass
 # 
 # 
-class TestGenericTestsMyAdapter(BaseGenericTests):
+class TestGenericTestsHive(BaseGenericTests):
    pass
 # 
 # NG 
-# class TestSnapshotCheckColsMyAdapter(BaseSnapshotCheckCols):
+# class TestSnapshotCheckColsHive(BaseSnapshotCheckCols):
 #    pass
 # 
 # NG
-# class TestSnapshotTimestampMyAdapter(BaseSnapshotTimestamp):
+# class TestSnapshotTimestampHive(BaseSnapshotTimestamp):
 #     pass
 # 
 #
