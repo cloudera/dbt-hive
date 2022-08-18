@@ -1,16 +1,14 @@
-Hive3 dbt adapter (experimental)
+Hive dbt adapter
 
 ### 
 Hive adapter for dbt. https://www.getdbt.com/
 
-Currently, only support Hive3
-
-- support features:
+- supported features:
    - base
    - ephemeral
    - incremntal
 
-- not support features:
+- not supported features:
    - snapshot
 
 ### Install
