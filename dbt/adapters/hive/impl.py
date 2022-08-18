@@ -155,8 +155,17 @@ class HiveAdapter(SQLAdapter):
         #        )
         #    )
 
-        relations = []
+        # in Hive 2, result_tables has table + view, result_views only has views
+        # so we build a result_tables_without_view that doesnot have views
+        
+        result_tables_without_view = []
         for row in result_tables:
+            # check if this table is view
+            is_view = len(list(filter(lambda x: x['tab_name'] == row['tab_name'], result_views))) == 1
+            if (not is_view): result_tables_without_view.append(row)
+		
+        relations = []
+        for row in result_tables_without_view:
             relations.append(
                 self.Relation.create(
                     schema=schema_relation.schema,
@@ -172,6 +181,7 @@ class HiveAdapter(SQLAdapter):
                     type='view'
                 )
             )
+
         return relations
 
 
