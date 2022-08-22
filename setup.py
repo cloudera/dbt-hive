@@ -59,6 +59,7 @@ setup(
     install_requires=[
         'dbt-core~={}'.format(dbt_core_version),
         "setuptools>=40.3.0",
-        "impyla>=0.18a5"
+        "impyla>=0.18a5",
+        "sqlparams>=3.0.0"
     ]
 )
