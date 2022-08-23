@@ -45,7 +45,7 @@ def _get_dbt_core_version():
 
 package_name = "dbt-hive"
 # make sure this always matches dbt/adapters/hive/__version__.py
-package_version = "1.1.0"
+package_version = "1.1.1"
 description = """The Hive adapter plugin for dbt"""
 
 dbt_core_version = _get_dbt_core_version()
