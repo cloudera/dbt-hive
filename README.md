@@ -1,7 +1,14 @@
-Hive dbt adapter
+# dbt-hive
 
-### 
-Hive adapter for dbt. https://www.getdbt.com/
+The `dbt-hive` adapter allows you to use [dbt](https://www.getdbt.com/) along with [Apache Hive](https://hive.apache.org/) and [Cloudera Data Platform](https://cloudera.com)
+
+
+## Getting started
+
+- [Install dbt](https://docs.getdbt.com/docs/installation)
+- Read the [introduction](https://docs.getdbt.com/docs/introduction/) and [viewpoint](https://docs.getdbt.com/docs/about/viewpoint/)
+
+### Credits
 
 The initial adapter code was developed by bachng2017 who agreed to transfer the ownership and continute active development.
 This code base is now being activiely developed and maintained by Innovation Accelerator team in Cloudera.
