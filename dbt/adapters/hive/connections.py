@@ -37,7 +37,7 @@ import time
 import impala.dbapi
 
 from dbt.events import AdapterLogger
-logger = AdapterLogger("Impala")
+logger = AdapterLogger("Hive")
 
 NUMBERS = DECIMALS + (int, float)
 

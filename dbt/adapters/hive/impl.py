@@ -35,7 +35,7 @@ import time
 from dbt.clients import agate_helper
 
 from dbt.events import AdapterLogger
-logger = AdapterLogger("Impala")
+logger = AdapterLogger("Hive")
 
 GET_COLUMNS_IN_RELATION_MACRO_NAME = 'get_columns_in_relation'
 LIST_SCHEMAS_MACRO_NAME = 'list_schemas'
