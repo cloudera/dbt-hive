@@ -60,6 +60,8 @@ setup(
     author_email="innovation-feedback@cloudera.com",
     url="https://github.com/cloudera/dbt-hive",
     packages=find_namespace_packages(include=['dbt', 'dbt.*']),
+    data_files=[('', ['dbt/adapters/hive/.env'])],
+    include_package_data=True,
     package_data={
         "dbt": [
             "include/hive/dbt_project.yml",
@@ -73,6 +75,7 @@ setup(
         'dbt-core~={}'.format(dbt_core_version),
         "setuptools>=40.3.0",
         "impyla>=0.18a5",
-        "sqlparams>=3.0.0"
+        "sqlparams>=3.0.0",
+        "python-decouple>=3.6"
     ]
 )

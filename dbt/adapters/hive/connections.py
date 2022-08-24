@@ -37,6 +37,10 @@ import time
 
 import impala.dbapi
 
+import json
+import hashlib
+import threading
+
 NUMBERS = DECIMALS + (int, float)
 
 DEFAULT_HIVE_PORT = 10000
@@ -54,6 +58,7 @@ class HiveCredentials(Credentials):
     use_ssl: Optional[bool] = True
     use_http_transport: Optional[bool] = True
     http_path: Optional[str] = None
+    usage_tracking: Optional[bool] = True # usage tracking is enabled by default
 
     @classmethod
     def __pre_deserialize__(cls, data):
@@ -170,26 +175,51 @@ class HiveConnectionManager(SQLConnectionManager):
 
         credentials = connection.credentials
 
-        # add configuration to yaml
-        if (not credentials.auth_type):
-           hive_conn = impala.dbapi.connect(
-                         host=credentials.host, 
-                         port=credentials.port
-                   )
-        elif (credentials.auth_type.upper() == 'LDAP'):
-           hive_conn = impala.dbapi.connect(
-                         host=credentials.host,
-                         port=credentials.port,
-                         auth_mechanism='LDAP',
-                         use_http_transport=credentials.use_http_transport,
-                         user=credentials.user,
-                         password=credentials.password,
-                         use_ssl=credentials.use_ssl,
-                         http_path=credentials.http_path
-                   )
+        auth_type = "insecure"
+        try: 
+            # add configuration to yaml
+            if (not credentials.auth_type):
+                hive_conn = impala.dbapi.connect(
+                                host=credentials.host, 
+                                port=credentials.port
+                        )
+            elif (credentials.auth_type.upper() == 'LDAP'):
+                auth_type = "ldap"
+                hive_conn = impala.dbapi.connect(
+                                host=credentials.host,
+                                port=credentials.port,
+                                auth_mechanism='LDAP',
+                                use_http_transport=credentials.use_http_transport,
+                                user=credentials.user,
+                                password=credentials.password,
+                                use_ssl=credentials.use_ssl,
+                                http_path=credentials.http_path
+                        )
 
-        connection.state = ConnectionState.OPEN
-        connection.handle = HiveConnectionWrapper(hive_conn)
+            connection.state = ConnectionState.OPEN
+            connection.handle = HiveConnectionWrapper(hive_conn)
+        except:
+            logger.debug("Connection error")
+            connection.state = ConnectionState.FAIL
+            connection.handle = None
+            pass
+
+        try:
+            if (credentials.usage_tracking):
+               tracking_data = {}
+               payload = {}
+               payload["id"] = "dbt_hive_open"
+               payload["unique_hash"] = hashlib.md5(credentials.host.encode()).hexdigest()
+               payload["auth"] = auth_type
+               payload["connection_state"] = connection.state
+
+               tracking_data["data"] = payload
+
+               the_track_thread = threading.Thread(target=track_usage, kwargs={"data": tracking_data})
+               the_track_thread.start()
+        except:
+            logger.debug("Usage tracking error")
+
         return connection
 
     @contextmanager
@@ -286,3 +316,19 @@ class HiveConnectionManager(SQLConnectionManager):
             raise exc
 
 
+# usage tracking code - Cloudera specific 
+def track_usage(data):
+   import requests
+   from decouple import config
+
+   SNOWPLOW_ENDPOINT = config('SNOWPLOW_ENDPOINT')
+   SNOWPLOW_TIMEOUT  = int(config('SNOWPLOW_TIMEOUT')) # 10 seconds
+
+   # prod creds
+   headers = {'x-api-key': config('SNOWPLOW_API_KEY'), 'x-datacoral-environment': config('SNOWPLOW_ENNV'), 'x-datacoral-passthrough': 'true'}
+
+   data = json.dumps([data])
+
+   res = requests.post(SNOWPLOW_ENDPOINT, data = data, headers = headers, timeout = SNOWPLOW_TIMEOUT)
+
+   return res
