@@ -1,5 +1,5 @@
-# Changelos
+# Changelog
 
-## 1.1.0-2
-- add session_properties to profile
+## 1.1.1 (August 2022)
+- First version of dbt-hive released by Cloudera
 

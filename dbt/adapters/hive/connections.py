@@ -17,7 +17,6 @@ import dbt.exceptions
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
 from dbt.contracts.connection import ConnectionState
-from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.utils import DECIMALS
 from dbt.adapters.hive import __version__
 
@@ -40,6 +39,8 @@ import impala.dbapi
 import json
 import hashlib
 import threading
+from dbt.events import AdapterLogger
+logger = AdapterLogger("Hive")
 
 NUMBERS = DECIMALS + (int, float)
 
@@ -256,7 +257,7 @@ class HiveConnectionManager(SQLConnectionManager):
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False
     ) -> Tuple[Connection, Any]:
-        
+
         connection = self.get_thread_connection()
         if auto_begin and connection.transaction_open is False:
             self.begin()
