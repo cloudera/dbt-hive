@@ -29,11 +29,13 @@ from dbt.adapters.hive import HiveRelation
 from dbt.adapters.hive import HiveColumn
 from dbt.adapters.base import BaseRelation
 from dbt.clients.agate_helper import DEFAULT_TYPE_TESTER
-from dbt.logger import GLOBAL_LOGGER as logger
 from dbt.utils import executor
 
 import time
 from dbt.clients import agate_helper
+
+from dbt.events import AdapterLogger
+logger = AdapterLogger("Impala")
 
 GET_COLUMNS_IN_RELATION_MACRO_NAME = 'get_columns_in_relation'
 LIST_SCHEMAS_MACRO_NAME = 'list_schemas'
@@ -153,7 +155,7 @@ class HiveAdapter(SQLAdapter):
 
         # hive2
         # Collect table/view separately
-        # Unfortunatly, Hive2 does not distincguish table/view 
+        # Unfortunatly, Hive2 does not distincguish table/view
         # Currently views are also listed in `show tables`
         # https://issues.apache.org/jira/browse/HIVE-14558
         # all_rows = result_tables
@@ -170,13 +172,13 @@ class HiveAdapter(SQLAdapter):
 
         # in Hive 2, result_tables has table + view, result_views only has views
         # so we build a result_tables_without_view that doesnot have views
-        
+
         result_tables_without_view = []
         for row in result_tables:
             # check if this table is view
             is_view = len(list(filter(lambda x: x['tab_name'] == row['tab_name'], result_views))) == 1
             if (not is_view): result_tables_without_view.append(row)
-		
+
         relations = []
         for row in result_tables_without_view:
             relations.append(
@@ -372,7 +374,7 @@ class HiveAdapter(SQLAdapter):
 
         columns: List[Dict[str, Any]] = []
         for relation in self.list_relations(database, schema):
-            logger.debug("Getting table schema for relation {}", relation)
+            logger.debug("Getting table schema for relation {}".format(relation))
             columns.extend(self._get_columns_for_catalog(relation))
 
         if len(columns) > 0:
