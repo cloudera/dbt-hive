@@ -149,8 +149,6 @@ class HiveConnectionWrapper(object):
             return float(value)
         elif isinstance(value, datetime):
             return value.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        elif isinstance(value, str):
-            return "'{}'".format(value.replace("'", "''"))
         else:
             return value
 
@@ -173,7 +171,7 @@ class HiveConnectionManager(SQLConnectionManager):
         # add configuration to yaml
         if (not credentials.auth_type):
            hive_conn = impala.dbapi.connect(
-                         host=credentials.host, 
+                         host=credentials.host,
                          port=credentials.port
                    )
         elif (credentials.auth_type.upper() == 'LDAP'):
@@ -226,7 +224,7 @@ class HiveConnectionManager(SQLConnectionManager):
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False
     ) -> Tuple[Connection, Any]:
-        
+
         connection = self.get_thread_connection()
         if auto_begin and connection.transaction_open is False:
             self.begin()
