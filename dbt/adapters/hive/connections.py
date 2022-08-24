@@ -151,8 +151,6 @@ class HiveConnectionWrapper(object):
             return float(value)
         elif isinstance(value, datetime):
             return value.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        elif isinstance(value, str):
-            return "'{}'".format(value.replace("'", "''"))
         else:
             return value
 
