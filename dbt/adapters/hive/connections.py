@@ -155,8 +155,6 @@ class HiveConnectionWrapper(object):
             return float(value)
         elif isinstance(value, datetime):
             return value.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        elif isinstance(value, str):
-            return "'{}'".format(value.replace("'", "''"))
         else:
             return value
 
@@ -196,6 +194,8 @@ class HiveConnectionManager(SQLConnectionManager):
                                 use_ssl=credentials.use_ssl,
                                 http_path=credentials.http_path
                         )
+            else:
+                raise dbt.exceptions.DbtProfileError("Invalid auth_type {} provided".format(credentials.auth_type))
 
             connection.state = ConnectionState.OPEN
             connection.handle = HiveConnectionWrapper(hive_conn)
