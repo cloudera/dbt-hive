@@ -187,6 +187,9 @@ class HiveConnectionManager(SQLConnectionManager):
                          use_ssl=credentials.use_ssl,
                          http_path=credentials.http_path
                    )
+        else:
+            raise dbt.exceptions.DbtProfileError(
+                    "Invalid auth_type {} provided".format(credentials.auth_type))
 
         connection.state = ConnectionState.OPEN
         connection.handle = HiveConnectionWrapper(hive_conn)
