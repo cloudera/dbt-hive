@@ -42,13 +42,17 @@
 
   {{ run_hooks(pre_hooks) }}
 
+  {% set drop_temp_relation = False %}
+
   {% if existing_relation is none %}
     {% set build_sql = create_table_as(False, target_relation, sql) %}
   {% elif existing_relation.is_view or full_refresh_mode %}
     {% do adapter.drop_relation(existing_relation) %}
     {% set build_sql = create_table_as(False, target_relation, sql) %}
   {% else %}
-    {% do run_query(create_table_as(True, tmp_relation, sql)) %}
+    {{ drop_relation(tmp_relation) }}  {# call the drop_relation macro directy instead of the dbt-core method to avoid type check, as type is null for tmp_relation #}
+    {% do run_query(create_table_as(False, tmp_relation, sql)) %}
+    {% set drop_temp_relation = True %}
     {% set build_sql = dbt_hive_get_incremental_sql(strategy, tmp_relation, target_relation, unique_key) %}
   {% endif %}
 
@@ -57,6 +61,10 @@
   {%- endcall -%}
 
   {{ run_hooks(post_hooks) }}
+
+  {% if drop_temp_relation %}
+    {{ drop_relation(tmp_relation) }}  {# call the drop_relation macro directy instead of the dbt-core method to avoid type check, as type is null for tmp_relation #}
+  {% endif %}
 
   {{ return({'relations': [target_relation]}) }}
 

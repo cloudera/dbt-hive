@@ -206,9 +206,12 @@
 {% endmacro %}
 
 {% macro hive__drop_relation(relation) -%}
-  {% call statement('drop_relation', auto_begin=False) -%}
-    drop {{ relation.type }} if exists {{ relation }}
-  {%- endcall %}
+  {% call statement('drop_relation_if_exists_table') %}
+    drop table if exists {{ relation }}
+  {% endcall %}
+  {% call statement('drop_relation_if_exists_view') %}
+    drop view if exists {{ relation }}
+  {% endcall %}
 {% endmacro %}
 
 
