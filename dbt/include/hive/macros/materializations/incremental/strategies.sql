@@ -35,9 +35,25 @@
 {% endmacro %}
 
 
+{% macro get_update_csv(column_names, qualifier='') %}
+
+    {% set quoted = [] %}
+    {% for col in column_names -%}
+        {% if qualifier != '' %}
+          {%- do quoted.append(qualifier+'.'+col) -%}
+        {% else %}
+          {%- do quoted.append(col) -%}
+        {% endif %}
+    {%- endfor %}
+
+    {%- set dest_cols_csv = quoted | join(', ') -%}
+    {{ return(dest_cols_csv) }}
+
+{% endmacro %}
+
 {% macro hive__get_merge_sql(target, source, unique_key, dest_columns, predicates=none) %}
-  {# skip dest_columns, use merge_update_columns config if provided, otherwise use "*" #}
   {%- set update_columns = config.get("merge_update_columns") -%}
+  {%- set update_cols_csv = get_update_csv(update_columns, 'DBT_INTERNAL_SOURCE') -%}
   
   {% set merge_condition %}
     {% if unique_key %}
@@ -48,7 +64,7 @@
   {% endset %}
   
     merge into {{ target }} as DBT_INTERNAL_DEST
-      using {{ source.include(schema=false) }} as DBT_INTERNAL_SOURCE
+      using {{ source.include(schema=true) }} as DBT_INTERNAL_SOURCE
       
       {{ merge_condition }}
       
@@ -59,7 +75,10 @@
         {%- endfor %}
         {%- else %} * {% endif %}
     
-      when not matched then insert *
+      when not matched then insert 
+        ({{get_update_csv(update_columns)}})
+      values 
+        ({{update_cols_csv}})
 {% endmacro %}
 
 
