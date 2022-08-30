@@ -17,7 +17,7 @@
 {% macro file_format_clause() %}
   {%- set file_format = config.get('file_format', validator=validation.any[basestring]) -%}
   {%- if file_format is not none %}
-    using {{ file_format }}
+    stored as {{ file_format }}
   {%- endif %}
 {%- endmacro -%}
 
