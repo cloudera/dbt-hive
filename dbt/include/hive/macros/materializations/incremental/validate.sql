@@ -39,17 +39,6 @@
     Invalid incremental strategy provided: {{ raw_strategy }}
     Expected one of: 'append', 'merge', 'insert_overwrite'
   {%- endset %}
-
-  {% set invalid_merge_msg -%}
-    Invalid incremental strategy provided: {{ raw_strategy }}
-    You can only choose this strategy when file_format is set to 'delta'
-  {%- endset %}
-  
-  {% set invalid_insert_overwrite_delta_msg -%}
-    Invalid incremental strategy provided: {{ raw_strategy }}
-    You cannot use this strategy when file_format is set to 'delta'
-    Use the 'append' or 'merge' strategy instead
-  {%- endset %}
   
   {% set invalid_insert_overwrite_endpoint_msg -%}
     Invalid incremental strategy provided: {{ raw_strategy }}
@@ -60,12 +49,6 @@
   {% if raw_strategy not in ['append', 'merge', 'insert_overwrite'] %}
     {% do exceptions.raise_compiler_error(invalid_strategy_msg) %}
   {%-else %}
-    {% if raw_strategy == 'merge' and file_format != 'delta' %}
-      {% do exceptions.raise_compiler_error(invalid_merge_msg) %}
-    {% endif %}
-    {% if raw_strategy == 'insert_overwrite' and file_format == 'delta' %}
-      {% do exceptions.raise_compiler_error(invalid_insert_overwrite_delta_msg) %}
-    {% endif %}
     {% if raw_strategy == 'insert_overwrite' and target.endpoint %}
       {% do exceptions.raise_compiler_error(invalid_insert_overwrite_endpoint_msg) %}
     {% endif %}
