@@ -115,13 +115,15 @@
 
 {% macro hive__create_table_as(temporary, relation, sql) -%}
   {%- set _properties = config.get('properties') -%}
+  {%- set is_external = config.get('external') -%}
+
   {% if temporary -%}
     {{ create_temporary_view(relation, sql) }}
   {%- else -%}
     {% if config.get('file_format', validator=validation.any[basestring]) == 'delta' %}
       create or replace table {{ relation }}
     {% else %}
-      create table {{ relation }}
+      create {% if is_external == true -%}external{%- endif %} table {{ relation }}
     {% endif %}
     {{ file_format_clause() }}
     {{ options_clause() }}
