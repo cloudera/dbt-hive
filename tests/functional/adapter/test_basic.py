@@ -13,6 +13,8 @@ from dbt.tests.adapter.basic.test_generic_tests import BaseGenericTests
 from dbt.tests.adapter.basic.test_snapshot_check_cols import BaseSnapshotCheckCols
 from dbt.tests.adapter.basic.test_snapshot_timestamp import BaseSnapshotTimestamp
 from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
+from dbt.tests.adapter.grants.base_grants import BaseGrants
+
 
 class TestSimpleMaterializationsHive(BaseSimpleMaterializations):
    pass
@@ -53,4 +55,7 @@ class TestGenericTestsHive(BaseGenericTests):
 #
 
 class TestBaseAdapterMethod(BaseAdapterMethod):
+    pass
+
+class TestBaseGrantsHive(BaseGrants):
     pass
