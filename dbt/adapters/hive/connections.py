@@ -180,7 +180,8 @@ class HiveConnectionManager(SQLConnectionManager):
             if (not credentials.auth_type):
                 hive_conn = impala.dbapi.connect(
                                 host=credentials.host, 
-                                port=credentials.port
+                                port=credentials.port,
+                                auth_mechanism='PLAIN'       
                         )
             elif (credentials.auth_type.upper() == 'LDAP'):
                 auth_type = "ldap"
