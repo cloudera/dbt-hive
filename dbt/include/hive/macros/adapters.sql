@@ -242,7 +242,6 @@
   {% endif %}
 {% endmacro %}
 
-
 {% macro hive__list_tables_without_caching(schema) %}
   {% call statement('list_tables_without_caching', fetch_result=True) -%}
     show tables in {{ schema }}
@@ -258,4 +257,20 @@
   {% endcall %}
   {% do return(load_result('list_views_without_caching').table) %}
 {% endmacro %}
-k
+
+{% macro get_hive_version() %}
+  {% set version_results = run_query('select version()') %}
+  {% if execute %}
+     {% set num_rows = (version_results | length) %}
+
+     {% if num_rows == 1 %}
+        {% set version_text = version_results[0][0] %}
+        {{ log("get_hive_version " ~ version_text) }}
+        {% do return(version_text.split(".")[0]) %}
+     {% else %}
+        {% do return('2') %}  {# assume hive 2 by default #}    
+     {% endif %}
+  {% else %}
+    {% do return('2') %}  {# assume hive 2 by default #}
+  {% endif %}
+{% endmacro %}
