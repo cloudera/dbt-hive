@@ -40,16 +40,18 @@ import json
 import hashlib
 import threading
 from dbt.events import AdapterLogger
+
 logger = AdapterLogger("Hive")
 
 NUMBERS = DECIMALS + (int, float)
 
 DEFAULT_HIVE_PORT = 10000
 
+
 @dataclass
 class HiveCredentials(Credentials):
     # Add credentials members here, like:
-    host: str = 'localhost'
+    host: str = "localhost"
     schema: str = None
     port: Optional[int] = DEFAULT_HIVE_PORT
     database: Optional[str] = None
@@ -59,40 +61,37 @@ class HiveCredentials(Credentials):
     use_ssl: Optional[bool] = True
     use_http_transport: Optional[bool] = True
     http_path: Optional[str] = None
-    usage_tracking: Optional[bool] = True # usage tracking is enabled by default
+    usage_tracking: Optional[bool] = True  # usage tracking is enabled by default
 
     @classmethod
     def __pre_deserialize__(cls, data):
         data = super().__pre_deserialize__(data)
         # ignore database setting
-        data['database'] = None
+        data["database"] = None
         return data
 
     def __post_init__(self):
         # hive classifies database and schema as the same thing
-        if (
-            self.database is not None and
-            self.database != self.schema
-        ):
+        if self.database is not None and self.database != self.schema:
             raise dbt.exceptions.RuntimeException(
-                f'    schema: {self.schema} \n'
-                f'    database: {self.database} \n'
-                f'On Hive, database must be omitted or have the same value as'
-                f' schema.'
+                f"    schema: {self.schema} \n"
+                f"    database: {self.database} \n"
+                f"On Hive, database must be omitted or have the same value as"
+                f" schema."
             )
         self.database = None
 
-
     @property
     def type(self):
-        return 'hive'
+        return "hive"
 
     def _connection_keys(self):
-        return ('host','schema','user')
+        return ("host", "schema", "user")
 
 
 class HiveConnectionWrapper(object):
     """Wrap a Hive connection in a way that no-ops transactions"""
+
     # https://forums.databricks.com/questions/2157/in-apache-hive-sql-can-we-roll-back-the-transacti.html  # noqa
 
     def __init__(self, handle):
@@ -110,9 +109,7 @@ class HiveConnectionWrapper(object):
             try:
                 self._cursor.cancel()
             except EnvironmentError as exc:
-                logger.debug(
-                    "Exception while cancelling query: {}".format(exc)
-                )
+                logger.debug("Exception while cancelling query: {}".format(exc))
 
     def close(self):
         if self._cursor:
@@ -121,9 +118,7 @@ class HiveConnectionWrapper(object):
             try:
                 self._cursor.close()
             except EnvironmentError as exc:
-                logger.debug(
-                    "Exception while closing cursor: {}".format(exc)
-                )
+                logger.debug("Exception while closing cursor: {}".format(exc))
 
     def rollback(self, *args, **kwargs):
         logger.debug("NotImplemented: rollback")
@@ -141,20 +136,19 @@ class HiveConnectionWrapper(object):
         if bindings is not None:
             bindings = [self._fix_binding(binding) for binding in bindings]
 
-        result = self._cursor.execute(sql,bindings,configuration)
+        result = self._cursor.execute(sql, bindings, configuration)
         return result
-
 
     @classmethod
     def _fix_binding(cls, value):
         """Convert complex datatypes to primitives that can be loaded by
-           the Hive driver"""
+        the Hive driver"""
         if value is None:
-            return 'NULL'
+            return "NULL"
         elif isinstance(value, NUMBERS):
             return float(value)
         elif isinstance(value, datetime):
-            return value.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            return value.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         else:
             return value
 
@@ -164,39 +158,39 @@ class HiveConnectionWrapper(object):
 
 
 class HiveConnectionManager(SQLConnectionManager):
-    TYPE = 'hive'
+    TYPE = "hive"
 
     @classmethod
     def open(cls, connection):
         if connection.state == ConnectionState.OPEN:
-           logger.debug('Connection is already open, skipping open.')
-           return connection
+            logger.debug("Connection is already open, skipping open.")
+            return connection
 
         credentials = connection.credentials
 
         auth_type = "insecure"
-        try: 
+        try:
             # add configuration to yaml
-            if (not credentials.auth_type):
+            if not credentials.auth_type:
                 hive_conn = impala.dbapi.connect(
-                                host=credentials.host, 
-                                port=credentials.port,
-                                auth_mechanism='PLAIN'       
-                        )
-            elif (credentials.auth_type.upper() == 'LDAP'):
+                    host=credentials.host, port=credentials.port, auth_mechanism="PLAIN"
+                )
+            elif credentials.auth_type.upper() == "LDAP":
                 auth_type = "ldap"
                 hive_conn = impala.dbapi.connect(
-                                host=credentials.host,
-                                port=credentials.port,
-                                auth_mechanism='LDAP',
-                                use_http_transport=credentials.use_http_transport,
-                                user=credentials.user,
-                                password=credentials.password,
-                                use_ssl=credentials.use_ssl,
-                                http_path=credentials.http_path
-                        )
+                    host=credentials.host,
+                    port=credentials.port,
+                    auth_mechanism="LDAP",
+                    use_http_transport=credentials.use_http_transport,
+                    user=credentials.user,
+                    password=credentials.password,
+                    use_ssl=credentials.use_ssl,
+                    http_path=credentials.http_path,
+                )
             else:
-                raise dbt.exceptions.DbtProfileError("Invalid auth_type {} provided".format(credentials.auth_type))
+                raise dbt.exceptions.DbtProfileError(
+                    "Invalid auth_type {} provided".format(credentials.auth_type)
+                )
 
             connection.state = ConnectionState.OPEN
             connection.handle = HiveConnectionWrapper(hive_conn)
@@ -207,18 +201,22 @@ class HiveConnectionManager(SQLConnectionManager):
             pass
 
         try:
-            if (credentials.usage_tracking):
-               tracking_data = {}
-               payload = {}
-               payload["id"] = "dbt_hive_open"
-               payload["unique_hash"] = hashlib.md5(credentials.host.encode()).hexdigest()
-               payload["auth"] = auth_type
-               payload["connection_state"] = connection.state
+            if credentials.usage_tracking:
+                tracking_data = {}
+                payload = {}
+                payload["id"] = "dbt_hive_open"
+                payload["unique_hash"] = hashlib.md5(
+                    credentials.host.encode()
+                ).hexdigest()
+                payload["auth"] = auth_type
+                payload["connection_state"] = connection.state
 
-               tracking_data["data"] = payload
+                tracking_data["data"] = payload
 
-               the_track_thread = threading.Thread(target=track_usage, kwargs={"data": tracking_data})
-               the_track_thread.start()
+                the_track_thread = threading.Thread(
+                    target=track_usage, kwargs={"data": tracking_data}
+                )
+                the_track_thread.start()
         except:
             logger.debug("Usage tracking error")
 
@@ -235,7 +233,6 @@ class HiveConnectionManager(SQLConnectionManager):
                 raise
             raise dbt.exceptions.RuntimeException(str(exc))
 
-
     def cancel(self, connection):
         connection.handle.cancel()
 
@@ -246,17 +243,15 @@ class HiveConnectionManager(SQLConnectionManager):
 
     @classmethod
     def get_response(cls, cursor):
-        message = 'OK'
-        return AdapterResponse(
-            _message=message
-        )
+        message = "OK"
+        return AdapterResponse(_message=message)
 
     def add_query(
         self,
         sql: str,
         auto_begin: bool = True,
         bindings: Optional[Any] = None,
-        abridge_sql_log: bool = False
+        abridge_sql_log: bool = False,
     ) -> Tuple[Connection, Any]:
 
         connection = self.get_thread_connection()
@@ -266,7 +261,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
         with self.exception_handler(sql):
             if abridge_sql_log:
-                log_sql = '{}...'.format(sql[:512])
+                log_sql = "{}...".format(sql[:512])
             else:
                 log_sql = sql
 
@@ -279,13 +274,13 @@ class HiveConnectionManager(SQLConnectionManager):
             # running substitution query from impyla. this fix also depends on a patch for impyla:
             # https://github.com/cloudera/impyla/pull/486
             configuration = {}
-            configuration['paramstyle'] = 'format'
+            configuration["paramstyle"] = "format"
             cursor.execute(sql, bindings, configuration)
 
             fire_event(
                 SQLQueryStatus(
                     status=str(self.get_response(cursor)),
-                    elapsed=round((time.time() - pre), 2)
+                    elapsed=round((time.time() - pre), 2),
                 )
             )
 
@@ -312,25 +307,32 @@ class HiveConnectionManager(SQLConnectionManager):
             if not hasattr(creds, key):
                 raise dbt.exceptions.DbtProfileError(
                     "The config '{}' is required when using the {} method"
-                    " to connect to Hive".format(key, method))
+                    " to connect to Hive".format(key, method)
+                )
 
         else:
             raise exc
 
 
-# usage tracking code - Cloudera specific 
+# usage tracking code - Cloudera specific
 def track_usage(data):
-   import requests
-   from decouple import config
+    import requests
+    from decouple import config
 
-   SNOWPLOW_ENDPOINT = config('SNOWPLOW_ENDPOINT')
-   SNOWPLOW_TIMEOUT  = int(config('SNOWPLOW_TIMEOUT')) # 10 seconds
+    SNOWPLOW_ENDPOINT = config("SNOWPLOW_ENDPOINT")
+    SNOWPLOW_TIMEOUT = int(config("SNOWPLOW_TIMEOUT"))  # 10 seconds
 
-   # prod creds
-   headers = {'x-api-key': config('SNOWPLOW_API_KEY'), 'x-datacoral-environment': config('SNOWPLOW_ENNV'), 'x-datacoral-passthrough': 'true'}
+    # prod creds
+    headers = {
+        "x-api-key": config("SNOWPLOW_API_KEY"),
+        "x-datacoral-environment": config("SNOWPLOW_ENNV"),
+        "x-datacoral-passthrough": "true",
+    }
 
-   data = json.dumps([data])
+    data = json.dumps([data])
 
-   res = requests.post(SNOWPLOW_ENDPOINT, data = data, headers = headers, timeout = SNOWPLOW_TIMEOUT)
+    res = requests.post(
+        SNOWPLOW_ENDPOINT, data=data, headers=headers, timeout=SNOWPLOW_TIMEOUT
+    )
 
-   return res
+    return res
