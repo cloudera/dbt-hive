@@ -61,6 +61,7 @@ class HiveCredentials(Credentials):
     use_ssl: Optional[bool] = True
     use_http_transport: Optional[bool] = True
     http_path: Optional[str] = None
+    kerberos_service_name: Optional[str] = None
     usage_tracking: Optional[bool] = True  # usage tracking is enabled by default
 
     @classmethod
@@ -186,6 +187,19 @@ class HiveConnectionManager(SQLConnectionManager):
                     password=credentials.password,
                     use_ssl=credentials.use_ssl,
                     http_path=credentials.http_path,
+                )
+            elif (
+                credentials.auth_type.upper() == "GSSAPI"
+                or credentials.auth_type.upper() == "KERBEROS"
+            ):  # kerberos based connection
+                auth_type = "kerberos"
+                hive_conn = impala.dbapi.connect(
+                    host=credentials.host,
+                    port=credentials.port,
+                    auth_mechanism="GSSAPI",
+                    kerberos_service_name=credentials.kerberos_service_name,
+                    use_http_transport=credentials.use_http_transport,
+                    use_ssl=credentials.use_ssl,
                 )
             else:
                 raise dbt.exceptions.DbtProfileError(
