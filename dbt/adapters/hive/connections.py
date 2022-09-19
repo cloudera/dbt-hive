@@ -26,13 +26,19 @@ from dbt.events.functions import fire_event
 from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
 
 from datetime import datetime
+import sqlparams
 
+from hologram.helpers import StrEnum
 from dataclasses import dataclass, field
 from typing import Any, Optional, Dict, Tuple
+import base64
 import time
 
 import impala.dbapi
 
+import json
+import hashlib
+import threading
 from dbt.events import AdapterLogger
 
 logger = AdapterLogger("Hive")
@@ -80,7 +86,7 @@ class HiveCredentials(Credentials):
         return "hive"
 
     def _connection_keys(self):
-        return "host", "schema", "user"
+        return ("host", "schema", "user")
 
 
 class HiveConnectionWrapper(object):
@@ -188,11 +194,31 @@ class HiveConnectionManager(SQLConnectionManager):
 
             connection.state = ConnectionState.OPEN
             connection.handle = HiveConnectionWrapper(hive_conn)
-        except Exception as exc:
-            logger.debug("Connection error: {}".format(exc))
+        except:
+            logger.debug("Connection error")
             connection.state = ConnectionState.FAIL
             connection.handle = None
             pass
+
+        try:
+            if credentials.usage_tracking:
+                tracking_data = {}
+                payload = {}
+                payload["id"] = "dbt_hive_open"
+                payload["unique_hash"] = hashlib.md5(
+                    credentials.host.encode()
+                ).hexdigest()
+                payload["auth"] = auth_type
+                payload["connection_state"] = connection.state
+
+                tracking_data["data"] = payload
+
+                the_track_thread = threading.Thread(
+                    target=track_usage, kwargs={"data": tracking_data}
+                )
+                the_track_thread.start()
+        except:
+            logger.debug("Usage tracking error")
 
         return connection
 
@@ -244,10 +270,11 @@ class HiveConnectionManager(SQLConnectionManager):
 
             cursor = connection.handle.cursor()
 
-            # paramstyle parameter is needed for the datetime object to be correctly quoted when
+            # paramstlye parameter is needed for the datetime object to be correctly qouted when
             # running substitution query from impyla. this fix also depends on a patch for impyla:
             # https://github.com/cloudera/impyla/pull/486
-            configuration = {"paramstyle": "format"}
+            configuration = {}
+            configuration["paramstyle"] = "format"
             cursor.execute(sql, bindings, configuration)
 
             fire_event(
@@ -285,3 +312,27 @@ class HiveConnectionManager(SQLConnectionManager):
 
         else:
             raise exc
+
+
+# usage tracking code - Cloudera specific
+def track_usage(data):
+    import requests
+    from decouple import config
+
+    SNOWPLOW_ENDPOINT = config("SNOWPLOW_ENDPOINT")
+    SNOWPLOW_TIMEOUT = int(config("SNOWPLOW_TIMEOUT"))  # 10 seconds
+
+    # prod creds
+    headers = {
+        "x-api-key": config("SNOWPLOW_API_KEY"),
+        "x-datacoral-environment": config("SNOWPLOW_ENNV"),
+        "x-datacoral-passthrough": "true",
+    }
+
+    data = json.dumps([data])
+
+    res = requests.post(
+        SNOWPLOW_ENDPOINT, data=data, headers=headers, timeout=SNOWPLOW_TIMEOUT
+    )
+
+    return res
