@@ -35,6 +35,8 @@ import base64
 import time
 
 import impala.dbapi
+from impala.error import HttpError
+from impala.error import HiveServer2Error
 
 import json
 import hashlib
@@ -226,6 +228,10 @@ class HiveConnectionManager(SQLConnectionManager):
     def exception_handler(self, sql: str):
         try:
             yield
+        except HttpError as httpError:
+            print ("HTTP Authorization error: " + str(httpError))
+        except HiveServer2Error as hiveError:
+            print("Hive server connection error: " + str(hiveError))
         except Exception as exc:
             logger.debug("Error while running:\n{}".format(sql))
             logger.debug(exc)
