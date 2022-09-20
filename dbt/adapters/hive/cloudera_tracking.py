@@ -54,7 +54,9 @@ def populate_platform_info(cred: Credentials, ver):
     platform_info["system"] = platform.system()
     # Architecture e.g. x86_64 ,arm, AMD64
     platform_info["machine"] = platform.machine()
-    # Full platform info e.g Linux-2.6.32-32-server-x86_64-with-Ubuntu-10.04-lucid,Windows-2008ServerR2-6.1.7601-SP1
+    # Full platform info e.g.
+    # Linux-2.6.32-32-server-x86_64-with-Ubuntu-10.04-lucid,
+    # Windows-2008ServerR2-6.1.7601-SP1
     platform_info["platform"] = platform.platform()
     # dbt core version
     platform_info[
@@ -110,7 +112,7 @@ def _get_sql_type(sql):
     else:
         sql_words = words[0].strip().split()
 
-    sql_type = " ".join(sql_words[:min(2, len(sql_words))]).lower()
+    sql_type = " ".join(sql_words[: min(2, len(sql_words))]).lower()
 
     return sql_type
 
@@ -139,7 +141,7 @@ def fix_tracking_payload(given_payload):
         "model_type",
         "permissions",
         "profile_name",
-        "sql_type"
+        "sql_type",
     ]
 
     for key in desired_keys:
@@ -165,7 +167,10 @@ def track_usage(tracking_payload):
 
     global usage_tracking
 
-    logger.debug(f"Usage tracking flag {usage_tracking}. To turn on/off use usage_tracking flag in profiles.yml")
+    logger.debug(
+        f"Usage tracking flag {usage_tracking}."
+        f"To turn on/off use usage_tracking flag in profiles.yml"
+    )
 
     # if usage_tracking is disabled, quit
     if not usage_tracking:
@@ -211,7 +216,10 @@ def track_usage(tracking_payload):
         try:
             logger.debug(f"Sending Event {data}")
             res = requests.post(
-                SNOWPLOW_ENDPOINT, data=data, headers=headers, timeout=SNOWPLOW_TIMEOUT
+                SNOWPLOW_ENDPOINT,
+                data=data,
+                headers=headers,
+                timeout=SNOWPLOW_TIMEOUT
             )
         except Exception as err:
             logger.debug(f"Usage tracking error. {err}")
