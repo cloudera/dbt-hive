@@ -49,7 +49,7 @@ class HiveCredentials(Credentials):
     schema: str = None
     port: Optional[int] = DEFAULT_HIVE_PORT
     database: Optional[str] = None
-    user: Optional[str] = None
+    username: Optional[str] = None
     password: Optional[str] = None
     auth_type: Optional[str] = None
     use_ssl: Optional[bool] = True
@@ -57,6 +57,8 @@ class HiveCredentials(Credentials):
     http_path: Optional[str] = None
     kerberos_service_name: Optional[str] = None
     usage_tracking: Optional[bool] = True  # usage tracking is enabled by default
+
+    _ALIASES = {"pass": "password", "user": "username"}
 
     @classmethod
     def __pre_deserialize__(cls, data):
@@ -177,7 +179,7 @@ class HiveConnectionManager(SQLConnectionManager):
                     port=credentials.port,
                     auth_mechanism="LDAP",
                     use_http_transport=credentials.use_http_transport,
-                    user=credentials.user,
+                    user=credentials.username,
                     password=credentials.password,
                     use_ssl=credentials.use_ssl,
                     http_path=credentials.http_path,
