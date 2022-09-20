@@ -11,30 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import time
 from contextlib import contextmanager
-from inspect import trace
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, Optional, Tuple
 
 import dbt.exceptions
+import impala.dbapi
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
-from dbt.contracts.connection import ConnectionState
-from dbt.utils import DECIMALS
-from dbt.adapters.hive import __version__
-
-from dbt.contracts.connection import Connection, AdapterResponse
-
+from dbt.contracts.connection import (AdapterResponse, Connection,
+                                      ConnectionState)
+from dbt.events import AdapterLogger
 from dbt.events.functions import fire_event
 from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
+from dbt.utils import DECIMALS
 
-from datetime import datetime
-
-from dataclasses import dataclass, field
-from typing import Any, Optional, Dict, Tuple
-import time
-
-import impala.dbapi
-
-from dbt.events import AdapterLogger
+import dbt.adapters.hive.__version__ as ver
+import dbt.adapters.hive.cloudera_tracking as tracker
 
 logger = AdapterLogger("Hive")
 
@@ -78,6 +73,12 @@ class HiveCredentials(Credentials):
                 f" schema."
             )
         self.database = None
+        # set the usage tracking flag
+        tracker.usage_tracking = self.usage_tracking
+        # get platform information for tracking
+        tracker.populate_platform_info(self, ver)
+        # generate unique ids for tracking
+        tracker.populate_unique_ids(self)
 
     @property
     def type(self):
