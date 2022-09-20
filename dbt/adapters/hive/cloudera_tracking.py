@@ -70,7 +70,7 @@ def populate_platform_info(cred: Credentials, ver):
 
 def populate_unique_ids(cred: Credentials):
     host = str(cred.host).encode()
-    user = str(cred.user).encode()
+    user = str(cred.username).encode()
     timestamp = str(time.time()).encode()
 
     # dbt invocation id
