@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 from dbt.adapters.base.relation import BaseRelation, Policy
 from dbt.exceptions import RuntimeException
+import dbt.adapters.hive.cloudera_tracking as tracker
 
 
 @dataclass
@@ -49,6 +50,15 @@ class HiveRelation(BaseRelation):
             raise RuntimeException(
                 "Cannot set database `{}` in hive!".format(self.database)
             )
+        if self.type:
+            tracker.track_usage(
+                {
+                    "event_type": "dbt_hive_model_access",
+                    "model_name": self.render(),
+                    "model_type": self.type,
+                    "incremental_strategy": "",
+                }
+            )
 
     def render(self):
         if self.include_policy.database and self.include_policy.schema:
@@ -57,3 +67,14 @@ class HiveRelation(BaseRelation):
                 "include, but only one can be set"
             )
         return super().render()
+
+    def log_relation(self, incremental_strategy):
+        if self.type:
+            tracker.track_usage(
+                {
+                    "event_type": "dbt_hive_new_incremental",
+                    "model_name": self.render(),
+                    "model_type": self.type,
+                    "incremental_strategy": incremental_strategy,
+                }
+            )
