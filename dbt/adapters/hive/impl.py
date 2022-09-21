@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import re
+import json
+from collections import OrderedDict
 from concurrent.futures import Future
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Any, Union, Iterable
 import agate
-from dbt.contracts.relation import RelationType
 
 import dbt
 import dbt.exceptions
@@ -24,11 +24,12 @@ import dbt.exceptions
 from dbt.adapters.base import AdapterConfig
 from dbt.adapters.base.impl import catch_as_completed
 from dbt.adapters.sql import SQLAdapter
+
+import dbt.adapters.hive.cloudera_tracking as tracker
 from dbt.adapters.hive import HiveConnectionManager
 from dbt.adapters.hive import HiveRelation
 from dbt.adapters.hive import HiveColumn
 from dbt.adapters.base import BaseRelation
-from dbt.clients.agate_helper import DEFAULT_TYPE_TESTER
 from dbt.utils import executor
 
 from dbt.clients import agate_helper
@@ -381,7 +382,6 @@ class HiveAdapter(SQLAdapter):
 
         return agate.Table.from_object(
             columns,
-            # column_types=DEFAULT_TYPE_TESTER
             column_types=text_types,
         )
 
@@ -392,6 +392,33 @@ class HiveAdapter(SQLAdapter):
 
         exists = True if schema in [row[0] for row in results] else False
         return exists
+
+    def debug_query(self) -> None:
+        self.execute("select 1 as id")
+
+        try:
+            username = self.config.credentials.username
+            sql_query = "show grant user `" + username + "` on server"
+            _, table = self.execute(sql_query, True, True)
+            permissions_object = []
+            json_funcs = [c.jsonify for c in table.column_types]
+
+            for row in table.rows:
+                values = tuple(json_funcs[i](d) for i, d in enumerate(row))
+                permissions_object.append(OrderedDict(zip(row.keys(), values)))
+
+            permissions_json = json.dumps(permissions_object)
+
+            payload = {
+                "event_type": "dbt_hive_debug_and_fetch_permissions",
+                "permissions": permissions_json,
+            }
+            tracker.track_usage(payload)
+        except Exception as ex:
+            logger.debug(
+                f"Failed to fetch permissions for user: {username}. Exception: {ex}"
+            )
+            self.connections.get_thread_connection().handle.close()
 
     def get_rows_different_sql(
         self,

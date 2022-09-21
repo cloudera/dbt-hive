@@ -187,6 +187,7 @@ class HiveConnectionManager(SQLConnectionManager):
         credentials = connection.credentials
 
         auth_type = "insecure"
+        hive_conn = None
         try:
             # add configuration to yaml
             if not credentials.auth_type:
@@ -229,7 +230,6 @@ class HiveConnectionManager(SQLConnectionManager):
             logger.debug("Connection error: {}".format(exc))
             connection.state = ConnectionState.FAIL
             connection.handle = None
-            pass
 
         return connection
 
