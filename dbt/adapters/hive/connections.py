@@ -11,19 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import time
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, Optional, Tuple
 
 import dbt.exceptions
+import impala.dbapi
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
-from dbt.contracts.connection import ConnectionState
-from dbt.utils import DECIMALS
-from dbt.adapters.hive import __version__
-
-from dbt.contracts.connection import Connection, AdapterResponse
-
+from dbt.contracts.connection import (AdapterResponse, Connection,
+                                      ConnectionState)
+from dbt.events import AdapterLogger
 from dbt.events.functions import fire_event
 from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
+from dbt.utils import DECIMALS
 
 from datetime import datetime
 import sqlparams
@@ -43,6 +46,9 @@ import hashlib
 import threading
 from dbt.events import AdapterLogger
 
+import dbt.adapters.hive.__version__ as ver
+import dbt.adapters.hive.cloudera_tracking as tracker
+
 logger = AdapterLogger("Hive")
 
 NUMBERS = DECIMALS + (int, float)
@@ -57,13 +63,16 @@ class HiveCredentials(Credentials):
     schema: str = None
     port: Optional[int] = DEFAULT_HIVE_PORT
     database: Optional[str] = None
-    user: Optional[str] = None
+    username: Optional[str] = None
     password: Optional[str] = None
     auth_type: Optional[str] = None
     use_ssl: Optional[bool] = True
     use_http_transport: Optional[bool] = True
     http_path: Optional[str] = None
+    kerberos_service_name: Optional[str] = None
     usage_tracking: Optional[bool] = True  # usage tracking is enabled by default
+
+    _ALIASES = {"pass": "password", "user": "username"}
 
     @classmethod
     def __pre_deserialize__(cls, data):
@@ -82,13 +91,19 @@ class HiveCredentials(Credentials):
                 f" schema."
             )
         self.database = None
+        # set the usage tracking flag
+        tracker.usage_tracking = self.usage_tracking
+        # get platform information for tracking
+        tracker.populate_platform_info(self, ver)
+        # generate unique ids for tracking
+        tracker.populate_unique_ids(self)
 
     @property
     def type(self):
         return "hive"
 
     def _connection_keys(self):
-        return ("host", "schema", "user")
+        return "host", "schema", "user"
 
 
 class HiveConnectionWrapper(object):
@@ -184,10 +199,23 @@ class HiveConnectionManager(SQLConnectionManager):
                     port=credentials.port,
                     auth_mechanism="LDAP",
                     use_http_transport=credentials.use_http_transport,
-                    user=credentials.user,
+                    user=credentials.username,
                     password=credentials.password,
                     use_ssl=credentials.use_ssl,
                     http_path=credentials.http_path,
+                )
+            elif (
+                credentials.auth_type.upper() == "GSSAPI"
+                or credentials.auth_type.upper() == "KERBEROS"
+            ):  # kerberos based connection
+                auth_type = "kerberos"
+                hive_conn = impala.dbapi.connect(
+                    host=credentials.host,
+                    port=credentials.port,
+                    auth_mechanism="GSSAPI",
+                    kerberos_service_name=credentials.kerberos_service_name,
+                    use_http_transport=credentials.use_http_transport,
+                    use_ssl=credentials.use_ssl,
                 )
             else:
                 raise dbt.exceptions.DbtProfileError(
@@ -196,31 +224,11 @@ class HiveConnectionManager(SQLConnectionManager):
 
             connection.state = ConnectionState.OPEN
             connection.handle = HiveConnectionWrapper(hive_conn)
-        except:
-            logger.debug("Connection error")
+        except Exception as exc:
+            logger.debug("Connection error: {}".format(exc))
             connection.state = ConnectionState.FAIL
             connection.handle = None
             pass
-
-        try:
-            if credentials.usage_tracking:
-                tracking_data = {}
-                payload = {}
-                payload["id"] = "dbt_hive_open"
-                payload["unique_hash"] = hashlib.md5(
-                    credentials.host.encode()
-                ).hexdigest()
-                payload["auth"] = auth_type
-                payload["connection_state"] = connection.state
-
-                tracking_data["data"] = payload
-
-                the_track_thread = threading.Thread(
-                    target=track_usage, kwargs={"data": tracking_data}
-                )
-                the_track_thread.start()
-        except:
-            logger.debug("Usage tracking error")
 
         return connection
 
@@ -278,11 +286,10 @@ class HiveConnectionManager(SQLConnectionManager):
 
             cursor = connection.handle.cursor()
 
-            # paramstlye parameter is needed for the datetime object to be correctly qouted when
+            # paramstyle parameter is needed for the datetime object to be correctly quoted when
             # running substitution query from impyla. this fix also depends on a patch for impyla:
             # https://github.com/cloudera/impyla/pull/486
-            configuration = {}
-            configuration["paramstyle"] = "format"
+            configuration = {"paramstyle": "format"}
             cursor.execute(sql, bindings, configuration)
 
             fire_event(
@@ -320,27 +327,3 @@ class HiveConnectionManager(SQLConnectionManager):
 
         else:
             raise exc
-
-
-# usage tracking code - Cloudera specific
-def track_usage(data):
-    import requests
-    from decouple import config
-
-    SNOWPLOW_ENDPOINT = config("SNOWPLOW_ENDPOINT")
-    SNOWPLOW_TIMEOUT = int(config("SNOWPLOW_TIMEOUT"))  # 10 seconds
-
-    # prod creds
-    headers = {
-        "x-api-key": config("SNOWPLOW_API_KEY"),
-        "x-datacoral-environment": config("SNOWPLOW_ENNV"),
-        "x-datacoral-passthrough": "true",
-    }
-
-    data = json.dumps([data])
-
-    res = requests.post(
-        SNOWPLOW_ENDPOINT, data=data, headers=headers, timeout=SNOWPLOW_TIMEOUT
-    )
-
-    return res
