@@ -28,6 +28,24 @@ from dbt.events.functions import fire_event
 from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
 from dbt.utils import DECIMALS
 
+from datetime import datetime
+import sqlparams
+
+from hologram.helpers import StrEnum
+from dataclasses import dataclass, field
+from typing import Any, Optional, Dict, Tuple
+import base64
+import time
+
+import impala.dbapi
+from impala.error import HttpError
+from impala.error import HiveServer2Error
+
+import json
+import hashlib
+import threading
+from dbt.events import AdapterLogger
+
 import dbt.adapters.hive.__version__ as ver
 import dbt.adapters.hive.cloudera_tracking as tracker
 
@@ -218,6 +236,12 @@ class HiveConnectionManager(SQLConnectionManager):
     def exception_handler(self, sql: str):
         try:
             yield
+        except HttpError as httpError:
+            logger.debug("Authorization error: {}".format(httpError))
+            raise dbt.exceptions.RuntimeException ("HTTP Authorization error: " + str(httpError) + ", please check your credentials")
+        except HiveServer2Error as hiveError:
+            logger.debug("Server connection error: {}".format(hiveError))
+            raise dbt.exceptions.RuntimeException ("Unable to establish connection to Hive server: " + str(hiveError))
         except Exception as exc:
             logger.debug("Error while running:\n{}".format(sql))
             logger.debug(exc)
