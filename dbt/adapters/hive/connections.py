@@ -229,9 +229,11 @@ class HiveConnectionManager(SQLConnectionManager):
         try:
             yield
         except HttpError as httpError:
-            print ("HTTP Authorization error: " + str(httpError))
+            logger.debug("Authorization error: {}".format(httpError))
+            raise dbt.exceptions.RuntimeException ("HTTP Authorization error: " + str(httpError) + ", please check your credentials")
         except HiveServer2Error as hiveError:
-            print("Hive server connection error: " + str(hiveError))
+            logger.debug("Server connection error: {}".format(hiveError))
+            raise dbt.exceptions.RuntimeException ("Unable to establish connection to Hive server: " + str(hiveError))
         except Exception as exc:
             logger.debug("Error while running:\n{}".format(sql))
             logger.debug(exc)
