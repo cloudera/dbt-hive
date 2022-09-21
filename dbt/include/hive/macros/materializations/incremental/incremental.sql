@@ -37,7 +37,8 @@
 
   {%- set full_refresh_mode = (flags.FULL_REFRESH == True) -%}
 
-  {% set target_relation = this %}
+  {% set target_relation = this.incorporate(type='table') %}
+  {% do target_relation.log_relation(raw_strategy) %}
   {% set existing_relation = load_relation(this) %}
   {% set tmp_relation = make_temp_relation(this) %}
 

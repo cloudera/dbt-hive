@@ -64,8 +64,6 @@ def populate_platform_info(cred: Credentials, ver):
     ] = dbt.version.get_installed_version().to_version_string(skip_matcher=True)
     # dbt adapter info e.g. impala-1.2.0
     platform_info["dbt_adapter"] = f"{cred.type}-{ver.version}"
-    # TODO : remove on final testing
-    print(json.dumps(platform_info, indent=4))
 
 
 def populate_unique_ids(cred: Credentials):
@@ -81,8 +79,6 @@ def populate_unique_ids(cred: Credentials):
     unique_ids["unique_user_hash"] = hashlib.md5(user).hexdigest()
     # hashed session
     unique_ids["unique_session_hash"] = hashlib.md5(host + user + timestamp).hexdigest()
-    # TODO : remove on final testing
-    print(json.dumps(unique_ids, indent=4))
 
 
 def generate_profile_info(self):
