@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import time
+import json
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -275,11 +276,31 @@ class HiveConnectionManager(SQLConnectionManager):
             self.begin()
         fire_event(ConnectionUsed(conn_type=self.TYPE, conn_name=connection.name))
 
+        additional_info = {}
+        if self.query_header:
+            try:
+                additional_info = json.loads(self.query_header.comment.query_comment.strip())
+            except Exception as ex:  # silently ignore error for parsing
+                additional_info = {}
+                logger.debug(f"Unable to get query header {ex}")
+
         with self.exception_handler(sql):
             if abridge_sql_log:
                 log_sql = "{}...".format(sql[:512])
             else:
                 log_sql = sql
+
+            # track usage
+            payload = {
+                "event_type": "dbt_hive_start_query",
+                "sql": log_sql,
+                "profile_name": self.profile.profile_name
+            }
+
+            for key, value in additional_info.items():
+                payload[key] = value
+
+            tracker.track_usage(payload)
 
             fire_event(SQLQuery(conn_name=connection.name, sql=log_sql))
             pre = time.time()
@@ -289,13 +310,36 @@ class HiveConnectionManager(SQLConnectionManager):
             # paramstyle parameter is needed for the datetime object to be correctly quoted when
             # running substitution query from impyla. this fix also depends on a patch for impyla:
             # https://github.com/cloudera/impyla/pull/486
-            configuration = {"paramstyle": "format"}
-            cursor.execute(sql, bindings, configuration)
+            
+            query_exception = None
+            try:
+                configuration = {"paramstyle": "format"}
+                cursor.execute(sql, bindings, configuration)
+                query_status = str(self.get_response(cursor))
+            except Exception as ex:
+                query_status = str(ex)
+                query_exception = ex
+
+            elapsed_time = time.time() - pre
+
+            payload = {
+                "event_type": "dbt_hive_end_query",
+                "sql": log_sql,
+                "elapsed_time": "{:.2f}".format(elapsed_time),
+                "status": query_status,
+                "profile_name": self.profile.profile_name
+            }
+
+            tracker.track_usage(payload)
+
+            # re-raise query exception so that it propogates to dbt
+            if (query_exception):
+                raise query_exception
 
             fire_event(
                 SQLQueryStatus(
                     status=str(self.get_response(cursor)),
-                    elapsed=round((time.time() - pre), 2),
+                    elapsed=round(elapsed_time, 2),
                 )
             )
 
