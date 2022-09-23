@@ -84,7 +84,7 @@ def populate_cml_info():
     cml_info["ml_runtime_description"] = os.environ.get('ML_RUNTIME_DESCRIPTION', default_value)
     cml_info["ml_runtime_maintenance_version"] = os.environ.get('ML_RUNTIME_MAINTENANCE_VERSION', default_value)
     cml_info["ml_runtime_metadata_version"] = os.environ.get('ML_RUNTIME_METADATA_VERSION', default_value)
-    
+
 
 def populate_unique_ids(cred: Credentials):
     host = str(cred.host).encode()
