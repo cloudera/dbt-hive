@@ -29,21 +29,12 @@ from dbt.events.functions import fire_event
 from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
 from dbt.utils import DECIMALS
 
-from datetime import datetime
-
-from dataclasses import dataclass, field
-from typing import Any, Optional, Dict, Tuple
-import base64
+import json
 import time
 
 import impala.dbapi
 from impala.error import HttpError
 from impala.error import HiveServer2Error
-
-import json
-import hashlib
-import threading
-from dbt.events import AdapterLogger
 
 import dbt.adapters.hive.__version__ as ver
 import dbt.adapters.hive.cloudera_tracking as tracker
@@ -53,7 +44,6 @@ logger = AdapterLogger("Hive")
 NUMBERS = DECIMALS + (int, float)
 
 DEFAULT_HIVE_PORT = 10000
-
 
 @dataclass
 class HiveCredentials(Credentials):
