@@ -76,6 +76,7 @@ setup(
         "setuptools>=40.3.0",
         "impyla==0.18",
         "sqlparams>=3.0.0",
-        "python-decouple>=3.6"
+        "python-decouple>=3.6",
+        "kerberos>=1.3.0",
     ]
 )
