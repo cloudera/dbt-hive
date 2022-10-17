@@ -10,21 +10,18 @@ pytest_plugins = ["dbt.tests.fixtures.project"]
 @pytest.fixture(scope="class")
 def dbt_profile_target():
     return {
-        # 'type': 'trino',
-        # 'database': 'hive',
-        # 'port': 443,
-        # 'threads': 1,
-        # 'auth': 'LDAP',
-        # 'method': 'ldap',
-        # 'host': 'trino.d4b.jp',
-        # 'user': os.getenv('TRINO_USER'),
-        # 'password': os.getenv('TRINO_PASSWORD'),
-        'threads': 1,
         'type': 'hive',
-        'host': '172.31.0.16',
-        'auth': 'LDAP',
-        'user': os.getenv('HIVE_USER'),
+        'threads': 4,
+        'schema': 'dbt_hive_adapter_test',
+        'host':  os.getenv('HIVE_HOST'),
+        'http_path': os.getenv('HIVE_HTTP_PATH'),
+        'port': int(os.getenv('HIVE_PORT')),
+        'auth_type': 'LDAP',
+        'use_http_transport': True,
+        'use_ssl': True,
+        'username': os.getenv('HIVE_USER'),
         'password': os.getenv('HIVE_PASSWORD'),
+        'threads': 4,
     }
 
 # 
