@@ -1,4 +1,4 @@
 {% macro hive__any_value(expression) -%}
     {#-- return any value (non-deterministic)  --#}
-    first_value({{ expression }}) over(partition by {{expression}} order by {{expression}})
+    first_value({{ expression }}) over()
 {%- endmacro %}
