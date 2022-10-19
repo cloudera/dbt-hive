@@ -383,7 +383,7 @@ select
     cast({{date_trunc('day', 'updated_at') }} as date) as actual,
     day as expected
 
-from data
+from util_data
 
 union all
 
