@@ -92,7 +92,10 @@ def populate_unique_ids(cred: Credentials):
     timestamp = str(time.time()).encode()
 
     # dbt invocation id
-    unique_ids["id"] = active_user.invocation_id
+    if active_user:
+       unique_ids["id"] = active_user.invocation_id
+    else:
+       unique_ids["id"] = "N/A"
     # hashed host name
     unique_ids["unique_host_hash"] = hashlib.md5(host).hexdigest()
     # hashed username
