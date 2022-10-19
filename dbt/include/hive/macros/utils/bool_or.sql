@@ -1,3 +1,3 @@
-{% hive impala__bool_or(expression) -%}
-    bit_or({{ expression }})
+{% macro hive__bool_or(expression) -%}
+    max({{ expression }})
 {%- endmacro %}
