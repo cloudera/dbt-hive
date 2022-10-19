@@ -506,7 +506,7 @@ class TestLength(BaseLength):
         }
 
 models__test_listagg_sql = """
-with data as (
+with util_data as (
 
     select * from {{ ref('data_listagg') }}
 
