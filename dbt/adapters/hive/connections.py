@@ -343,7 +343,11 @@ class HiveConnectionManager(SQLConnectionManager):
             # paramstyle parameter is needed for the datetime object to be correctly quoted when
             # running substitution query from impyla. this fix also depends on a patch for impyla:
             # https://github.com/cloudera/impyla/pull/486
-            
+
+            if bindings:
+                # to avoid None as being treated as string, convert it to empty string
+                bindings = map(lambda x: x if x else "", bindings)
+
             query_exception = None
             try:
                 configuration = {"paramstyle": "format"}
