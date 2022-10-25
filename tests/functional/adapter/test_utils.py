@@ -22,7 +22,11 @@ from dbt.tests.adapter.utils.test_datediff import BaseDateDiff
 from dbt.tests.adapter.utils.test_date_trunc import BaseDateTrunc
 from dbt.tests.adapter.utils.test_escape_single_quotes import BaseEscapeSingleQuotesQuote
 from dbt.tests.adapter.utils.test_escape_single_quotes import BaseEscapeSingleQuotesBackslash
+from dbt.tests.adapter.utils.test_except import BaseExcept
+from dbt.tests.adapter.utils.test_hash import BaseHash
+from dbt.tests.adapter.utils.test_intersect import BaseIntersect
 from dbt.tests.adapter.utils.test_last_day import BaseLastDay
+from dbt.tests.adapter.utils.test_length import BaseLength
 from dbt.tests.adapter.utils.test_position import BasePosition
 from dbt.tests.adapter.utils.test_replace import BaseReplace
 from dbt.tests.adapter.utils.test_right import BaseRight
@@ -65,6 +69,13 @@ from dbt.tests.adapter.utils.fixture_date_trunc import (
     models__test_date_trunc_sql,
     models__test_date_trunc_yml,
 )
+
+from dbt.tests.adapter.utils.fixture_hash import (
+    seeds__data_hash_csv,
+    models__test_hash_sql,
+    models__test_hash_yml,
+)
+
 from dbt.tests.adapter.utils.fixture_last_day import (
     seeds__data_last_day_csv,
     models__test_last_day_sql,
@@ -362,6 +373,40 @@ class TestEscapeSingleQuotes(BaseEscapeSingleQuotesQuote):
         }
 
 
+class TestExcept(BaseExcept):
+    pass
+
+
+models__test_hash_sql = """
+with util_data as (
+
+    select * from {{ ref('data_hash') }}
+
+)
+
+select
+    {{ hash('input_1') }} as actual,
+    output as expected
+
+from util_data
+"""
+class TestHash(BaseHash):
+    @pytest.fixture(scope="class")
+    def seeds(self):
+        return {"data_hash.csv": seeds__data_hash_csv}
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "test_hash.yml": models__test_hash_yml,
+            "test_hash.sql": self.interpolate_macro_namespace(models__test_hash_sql, "hash"),
+        }
+
+
+class TestIntersect(BaseIntersect):
+    pass
+
+
 models__test_last_day_sql = """
 with util_data as (
 
@@ -392,6 +437,33 @@ class TestLastDay(BaseLastDay):
             "test_last_day.sql": self.interpolate_macro_namespace(
                 models__test_last_day_sql, "last_day"
             ),
+        }
+
+
+models__test_length_sql = """
+with util_data as (
+
+    select * from {{ ref('data_length') }}
+
+)
+
+select
+
+    {{ length('expression') }} as actual,
+    output as expected
+
+from util_data
+"""
+class TestLength(BaseLength):
+    @pytest.fixture(scope="class")
+    def seeds(self):
+        return {"data_length.csv": seeds__data_length_csv}
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "test_length.yml": models__test_length_yml,
+            "test_length.sql": self.interpolate_macro_namespace(models__test_length_sql, "length"),
         }
 models__test_position_sql = """
 with util_data as (
