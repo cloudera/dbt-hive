@@ -120,6 +120,11 @@ from dbt.tests.adapter.utils.fixture_split_part import (
     models__test_split_part_yml,
 )
 
+from dbt.tests.adapter.utils.fixture_escape_single_quotes import (
+     models__test_escape_single_quotes_quote_sql,
+     models__test_escape_single_quotes_yml,
+)
+
 models__test_any_value_sql = """
 with util_data as (
 
@@ -408,8 +413,20 @@ class TestDateTrunc(BaseDateTrunc):
         }
 
 
+models__test_escape_single_quotes_quote_sql = """
+ select '{{ escape_single_quotes("they're") }}' as actual, 'they\\'re' as expected union all
+ select '{{ escape_single_quotes("they are") }}' as actual, 'they are' as expected
+"""
+
 class TestEscapeSingleQuotes(BaseEscapeSingleQuotesQuote):
-    pass
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "test_escape_single_quotes.yml": models__test_escape_single_quotes_yml,
+            "test_escape_single_quotes.sql": self.interpolate_macro_namespace(
+                models__test_escape_single_quotes_quote_sql, "escape_single_quotes"
+            ),
+        }
 
 
 class TestExcept(BaseExcept):
