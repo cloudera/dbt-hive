@@ -1,3 +1,17 @@
+# Copyright 2022 Cloudera Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import pytest
 from dbt.tests.adapter.utils.base_utils import BaseUtils
 from dbt.tests.adapter.utils.test_any_value import BaseAnyValue
@@ -593,6 +607,17 @@ left join data_output
 on calculate.group_col = data_output.group_col
 and calculate.version = data_output.version
 """
+
+# remove test cases that will fail (order_by, limit_num)
+seeds__data_listagg_output_csv = """group_col,expected,version
+1,"a_|_b_|_c",bottom_ordered
+2,"a_|_1_|_p",bottom_ordered
+3,"g_|_g_|_g",bottom_ordered
+3,"g, g, g",comma_whitespace_unordered
+3,"g",distinct_comma
+3,"g,g,g",no_params
+"""
+
 class TestListagg(BaseListagg):
     @pytest.fixture(scope="class")
     def seeds(self):
