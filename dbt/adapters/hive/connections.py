@@ -22,7 +22,7 @@ import dbt.exceptions
 import impala.dbapi
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
-from dbt.contracts.connection import (AdapterResponse, Connection,
+from dbt.contracts.connection import (AdapterResponse, AdapterRequiredConfig, Connection,
                                       ConnectionState)
 from dbt.events import AdapterLogger
 from dbt.events.functions import fire_event
@@ -167,6 +167,11 @@ class HiveConnectionWrapper(object):
 
 class HiveConnectionManager(SQLConnectionManager):
     TYPE = "hive"
+
+    def __init__(self, profile: AdapterRequiredConfig):
+        super().__init__(profile)
+        # generate profile related object for instrumentation.
+        tracker.generate_profile_info(self)
 
     @classmethod
     def open(cls, connection):
