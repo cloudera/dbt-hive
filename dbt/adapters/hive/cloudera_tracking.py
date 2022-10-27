@@ -42,9 +42,8 @@ unique_ids = {}
 # Json object to store dbt profile(profile.yml) related information
 profile_info = {}
 
-# Json object to store cml environment variables
-cml_info = {}
-
+# Json object to store dbt deployment environment variables
+dbt_deployment_env_info = {}
 
 def populate_platform_info(cred: Credentials, ver):
     """
@@ -69,22 +68,12 @@ def populate_platform_info(cred: Credentials, ver):
     # dbt adapter info e.g. impala-1.2.0
     platform_info["dbt_adapter"] = f"{cred.type}-{ver.version}"
 
-
-def populate_cml_info():
+def populate_dbt_deployment_env_info():
     """
-    populate cml environment variables if available to be passed on for tracking
+    populate dbt deployment environment variables if available to be passed on for tracking
     """
     default_value = ""  # if environment variables doesn't exist add empty string as default
-    cml_info["ml_runtime_edition"] = os.environ.get('ML_RUNTIME_EDITION', default_value)
-    cml_info["ml_runtime_git_hash"] = os.environ.get('ML_RUNTIME_GIT_HASH', default_value)
-    cml_info["ml_runtime_kernel"] = os.environ.get('ML_RUNTIME_KERNEL', default_value)
-    cml_info["ml_runtime_editor"] = os.environ.get('ML_RUNTIME_EDITOR', default_value)
-    cml_info["ml_runtime_gbn"] = os.environ.get('ML_RUNTIME_GBN', default_value)
-    cml_info["ml_runtime_full_version"] = os.environ.get('ML_RUNTIME_FULL_VERSION', default_value)
-    cml_info["ml_runtime_description"] = os.environ.get('ML_RUNTIME_DESCRIPTION', default_value)
-    cml_info["ml_runtime_maintenance_version"] = os.environ.get('ML_RUNTIME_MAINTENANCE_VERSION', default_value)
-    cml_info["ml_runtime_metadata_version"] = os.environ.get('ML_RUNTIME_METADATA_VERSION', default_value)
-
+    dbt_deployment_env_info["dbt_deployment_env"] = os.environ.get('DBT_DEPLOYMENT_ENV', default_value)
 
 def populate_unique_ids(cred: Credentials):
     host = str(cred.host).encode()
@@ -201,7 +190,7 @@ def track_usage(tracking_payload):
     # inject other static payload to tracking_payload
     tracking_payload = _merge_keys(unique_ids, tracking_payload)
     tracking_payload = _merge_keys(platform_info, tracking_payload)
-    tracking_payload = _merge_keys(cml_info, tracking_payload)
+    tracking_payload = _merge_keys(dbt_deployment_env_info, tracking_payload)
     tracking_payload = _merge_keys(profile_info, tracking_payload)
 
     # form the tracking data
