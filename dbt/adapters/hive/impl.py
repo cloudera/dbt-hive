@@ -479,6 +479,39 @@ class HiveAdapter(SQLAdapter):
 
         return sql
 
+    ###
+    # Methods about grants
+    ###
+    def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
+        """Translate the result of `show grants` (or equivalent) to match the
+        grants which a user would configure in their project.
+
+        Ideally, the SQL to show grants should also be filtering:
+        filter OUT any grants TO the current user/role (e.g. OWNERSHIP).
+        If that's not possible in SQL, it can be done in this method instead.
+
+        :param grants_table: An agate table containing the query result of
+            the SQL returned by get_show_grant_sql
+        :return: A standardized dictionary matching the `grants` config
+        :rtype: dict
+        """
+        unsupported_privileges = ["INDEX", "READ", "WRITE"]
+
+        grants_dict: Dict[str, List[str]] = {}
+        for row in grants_table:
+            grantee = row["grantor"]
+            privilege = row["privilege"]
+            
+            # skip unsupported privileges 
+            if privilege in unsupported_privileges:
+                continue
+
+            if privilege in grants_dict.keys():
+                grants_dict[privilege].append(grantee)
+            else:
+                grants_dict.update({privilege: [grantee]})
+        return grants_dict
+
 
 # hive does something interesting with joins when both tables have the same
 # static values for the join condition and complains that the join condition is
