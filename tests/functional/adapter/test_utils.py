@@ -27,6 +27,7 @@ from dbt.tests.adapter.utils.test_hash import BaseHash
 from dbt.tests.adapter.utils.test_intersect import BaseIntersect
 from dbt.tests.adapter.utils.test_last_day import BaseLastDay
 from dbt.tests.adapter.utils.test_length import BaseLength
+from dbt.tests.adapter.utils.test_listagg import BaseListagg
 from dbt.tests.adapter.utils.test_position import BasePosition
 from dbt.tests.adapter.utils.test_replace import BaseReplace
 from dbt.tests.adapter.utils.test_right import BaseRight
@@ -85,6 +86,13 @@ from dbt.tests.adapter.utils.fixture_length import (
     seeds__data_length_csv,
     models__test_length_sql,
     models__test_length_yml,
+)
+
+from dbt.tests.adapter.utils.fixture_listagg import (
+    seeds__data_listagg_csv,
+    seeds__data_listagg_output_csv,
+    models__test_listagg_sql,
+    models__test_listagg_yml,
 )
 
 from dbt.tests.adapter.utils.fixture_position import (
@@ -465,6 +473,106 @@ class TestLength(BaseLength):
             "test_length.yml": models__test_length_yml,
             "test_length.sql": self.interpolate_macro_namespace(models__test_length_sql, "length"),
         }
+
+models__test_listagg_sql = """
+with util_data as (
+
+    select * from {{ ref('data_listagg') }}
+
+),
+
+data_output as (
+
+    select * from {{ ref('data_listagg_output') }}
+
+),
+
+calculate as (
+
+    select
+        group_col,
+        {{ listagg('string_text', "'_|_'", "order by order_col") }} as actual,
+        'bottom_ordered' as version
+    from util_data
+    group by group_col
+
+    union all
+
+    select
+        group_col,
+        {{ listagg('string_text', "'_|_'", "order by order_col", 2) }} as actual,
+        'bottom_ordered_limited' as version
+    from util_data
+    group by group_col
+
+    union all
+
+    select
+        group_col,
+        {{ listagg('string_text', "', '") }} as actual,
+        'comma_whitespace_unordered' as version
+    from util_data
+    where group_col = 3
+    group by group_col
+
+    union all
+
+    select
+        group_col,
+        {{ listagg('DISTINCT string_text', "','") }} as actual,
+        'distinct_comma' as version
+    from util_data
+    where group_col = 3
+    group by group_col
+
+    union all
+
+    select
+        group_col,
+        {{ listagg('string_text') }} as actual,
+        'no_params' as version
+    from util_data
+    where group_col = 3
+    group by group_col
+
+)
+
+select
+    calculate.actual,
+    data_output.expected
+from calculate
+left join data_output
+on calculate.group_col = data_output.group_col
+and calculate.version = data_output.version
+"""
+
+# remove test cases that will fail (order_by, limit_num)
+seeds__data_listagg_output_csv = """group_col,expected,version
+1,"a_|_b_|_c",bottom_ordered
+2,"a_|_1_|_p",bottom_ordered
+3,"g_|_g_|_g",bottom_ordered
+3,"g, g, g",comma_whitespace_unordered
+3,"g",distinct_comma
+3,"g,g,g",no_params
+"""
+
+class TestListagg(BaseListagg):
+    @pytest.fixture(scope="class")
+    def seeds(self):
+        return {
+            "data_listagg.csv": seeds__data_listagg_csv,
+            "data_listagg_output.csv": seeds__data_listagg_output_csv,
+        }
+
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "test_listagg.yml": models__test_listagg_yml,
+            "test_listagg.sql": self.interpolate_macro_namespace(
+                models__test_listagg_sql, "listagg"
+            ),
+        }
+
 models__test_position_sql = """
 with util_data as (
     select * from {{ ref('data_position') }}
