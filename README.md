@@ -22,12 +22,6 @@ dbt-core ~= 1.1.0
 impyla >= 0.18a5
 
 ### Install
-Clone the repository
-```
-cd dbt-hive
-pip3 install --user .
-```
-or install from pypip
 ```
 pip3 install --user dbt-hive
 ```
@@ -63,5 +57,5 @@ demo_project:
 |Snapshots|No|
 |Documentation|Yes|
 |Authentication: LDAP|Yes|
-|Authentication: Kerberos|No|
+|Authentication: Kerberos|Yes|
 

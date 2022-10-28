@@ -92,7 +92,6 @@ def populate_unique_ids(cred: Credentials):
     timestamp = str(time.time()).encode()
 
     # dbt invocation id
-    # dbt invocation id
     if active_user:
        unique_ids["id"] = active_user.invocation_id
     else:
@@ -207,7 +206,7 @@ def track_usage(tracking_payload):
     tracking_payload = _merge_keys(profile_info, tracking_payload)
 
     # form the tracking data
-    tracking_data = {"data": tracking_payload}
+    tracking_data = {"data": json.dumps(tracking_payload)}
 
     # inner function which actually calls the endpoint
     def _tracking_func(data):

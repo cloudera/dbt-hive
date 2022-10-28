@@ -23,7 +23,6 @@ def dbt_profile_target():
         'password': os.getenv('HIVE_PASSWORD'),
         'threads': 4,
     }
-
 # 
 from _pytest.assertion import truncate
 truncate.DEFAULT_MAX_LINES = 9999
