@@ -16,6 +16,8 @@ from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
 from dbt.tests.adapter.basic.test_docs_generate import BaseDocsGenerate, BaseDocsGenReferences
 from dbt.tests.adapter.utils.base_utils import BaseUtils
 
+from dbt.tests.adapter.basic.expected_catalog import base_expected_catalog, no_stats
+
 class TestSimpleMaterializationsHive(BaseSimpleMaterializations):
    pass
 
@@ -35,33 +37,46 @@ class TestEmptyHive(BaseEmpty):
 
 class TestEphemeralHive(BaseEphemeral):
    pass
-# 
-# 
+
 class TestIncrementalHive(BaseIncremental):
    pass
-# 
-# 
+
+
 class TestGenericTestsHive(BaseGenericTests):
    pass
-# 
-# NG 
-# class TestSnapshotCheckColsHive(BaseSnapshotCheckCols):
-#    pass
-# 
-# NG
-# class TestSnapshotTimestampHive(BaseSnapshotTimestamp):
-#     pass
-# 
-#
 
 class TestBaseAdapterMethod(BaseAdapterMethod):
     pass
 
 class TestBaseDocsHive(BaseDocsGenerate):
-     pass
+    @pytest.fixture(scope="class")
+    def expected_catalog(self, project, profile_user):
+        return base_expected_catalog(
+            project,
+            role=profile_user,
+            id_type="integer",
+            text_type="text",
+            time_type="timestamp",
+            view_type="view",
+            table_type="table",
+            model_stats=no_stats(),
+            seed_stats=no_stats()
+        )
 
 class TestBaseDocsGenRefsHive(BaseDocsGenReferences):
-     pass
-
+    @pytest.fixture(scope="class")
+    def expected_catalog(self, project, profile_user):
+        return base_expected_catalog(
+            project,
+            role=profile_user,
+            id_type="integer",
+            text_type="text",
+            time_type="timestamp",
+            view_type="view",
+            table_type="table",
+            model_stats=no_stats(),
+            seed_stats=no_stats()
+        )
+        
 class TestBaseUtilsHive(BaseUtils):
      pass
