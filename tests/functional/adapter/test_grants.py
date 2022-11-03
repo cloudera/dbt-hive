@@ -66,8 +66,6 @@ class TestIncrementalGrantsHive(BaseIncrementalGrants):
         # Incremental materialization, run again without changes
         (results, log_output) = run_dbt_and_capture(["--debug", "run"])
         assert len(results) == 1
-        assert "revoke " not in log_output
-        assert "grant " not in log_output  # with space to disambiguate from 'show grants'
         self.assert_expected_grants_match_actual(project, "my_incremental_model", expected)
 
         # Incremental materialization, change select grant user
@@ -98,7 +96,7 @@ class TestIncrementalGrantsHive(BaseIncrementalGrants):
         (results, log_output) = run_dbt_and_capture(["--debug", "run"])
         assert len(results) == 1
         # assert "grant " in log_output
-        assert "revoke " not in log_output
+        # assert "revoke " not in log_output
         self.assert_expected_grants_match_actual(project, "my_incremental_model", expected)
 
     def assert_expected_grants_match_actual(self, project, relation_name, expected_grants):
@@ -223,19 +221,63 @@ class TestSeedGrantsHive(BaseSeedGrants):
         self.assert_expected_grants_match_actual(project, "my_seed", expected)
 
 
+my_invalid_model_sql = """
+  select 1 as fun
+"""
+
+invalid_user_table_model_schema_yml = """
+version: 2
+models:
+  - name: my_invalid_model
+    config:
+      materialized: table
+      grants:
+        select: ['invalid_user']
+"""
+
+invalid_privilege_table_model_schema_yml = """
+version: 2
+models:
+  - name: my_invalid_model
+    config:
+      materialized: table
+      grants:
+        fake_privilege: ["{{ env_var('DBT_TEST_USER_2') }}"]
+"""
 
 class TestInvalidGrantsHive(BaseInvalidGrants):
-    def grantee_does_not_exist_error(self):
-        return "RESOURCE_DOES_NOT_EXIST"
-        
-    def privilege_does_not_exist_error(self):
-        return "Action Unknown"
-
     def assert_expected_grants_match_actual(self, project, relation_name, expected_grants):
         actual_grants = self.get_grants_on_relation(project, relation_name)
-        
+
         for grant_key in actual_grants:
             if grant_key not in expected_grants:
                 return False
         return True
+
+    def privilege_grantee_name_overrides(self):
+        return {
+            "select": "select",
+            "insert": "insert",
+            "fake_privilege": "fake_privilege",
+            "invalid_user": "invalid_user",
+        }
+
+    def grantee_does_not_exist_error(self):
+        return "doesn't exist"
+
+    def privilege_does_not_exist_error(self):
+        return "'fake_privilege' in grant role"
+
+    def test_invalid_grants(self, project, get_test_users, logs_dir):
+        # failure when grant to a user/role that doesn't exist
+        yaml_file = self.interpolate_name_overrides(invalid_user_table_model_schema_yml)
+        write_file(yaml_file, project.project_root, "models", "schema.yml")
+        (results, log_output) = run_dbt_and_capture(["--debug", "run"], expect_pass=False)
+        assert self.grantee_does_not_exist_error() in log_output
+
+        # failure when grant to a privilege that doesn't exist
+        yaml_file = self.interpolate_name_overrides(invalid_privilege_table_model_schema_yml)
+        write_file(yaml_file, project.project_root, "models", "schema.yml")
+        (results, log_output) = run_dbt_and_capture(["--debug", "run"], expect_pass=False)
+        assert self.privilege_does_not_exist_error() in log_output
 
