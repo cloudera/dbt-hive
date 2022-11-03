@@ -35,6 +35,9 @@
   {%- set unique_key = config.get('unique_key', none) -%}
   {%- set partition_by = config.get('partition_by', none) -%}
 
+  -- grab current tables grants config for comparision later on
+  {% set grant_config = config.get('grants') %}
+
   {%- set full_refresh_mode = (flags.FULL_REFRESH == True) -%}
 
   {% set target_relation = this.incorporate(type='table') %}
@@ -71,6 +74,9 @@
   {%- endcall -%}
 
   {{ run_hooks(post_hooks) }}
+
+  {% set should_revoke = should_revoke(existing_relation, full_refresh_mode) %}
+  {% do apply_grants(target_relation, grant_config, should_revoke) %}
 
   {% if drop_temp_relation %}
     {{ drop_relation(tmp_relation) }}  {# call the drop_relation macro directy instead of the dbt-core method to avoid type check, as type is null for tmp_relation #}
