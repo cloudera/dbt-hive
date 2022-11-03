@@ -65,14 +65,12 @@
 
         year({{second_date}}) - year({{first_date}})
 
-    {%- elif datepart in ('hour', 'minute', 'second', 'millisecond', 'microsecond') -%}
+    {%- elif datepart in ('hour', 'minute', 'second') -%}
 
         {%- set divisor -%}
             {%- if datepart == 'hour' -%} 3600
             {%- elif datepart == 'minute' -%} 60
             {%- elif datepart == 'second' -%} 1
-            {%- elif datepart == 'millisecond' -%} (1/1000)
-            {%- elif datepart == 'microsecond' -%} (1/1000000)
             {%- endif -%}
         {%- endset -%}
 
@@ -87,20 +85,6 @@
                 - {{ assert_not_null('unix_timestamp', first_date) }}
             ) / {{divisor}})
             end
-
-            {% if datepart == 'millisecond' %}
-                + cast(date_format({{second_date}}, 'SSS') as int)
-                - cast(date_format({{first_date}}, 'SSS') as int)
-            {% endif %}
-
-            {% if datepart == 'microsecond' %}
-                {% set capture_str = '[0-9]{4}-[0-9]{2}-[0-9]{2}.[0-9]{2}:[0-9]{2}:[0-9]{2}.([0-9]{6})' %}
-                -- Spark doesn't really support microseconds, so this is a massive hack!
-                -- It will only work if the timestamp-string is of the format
-                -- 'yyyy-MM-dd-HH mm.ss.SSSSSS'
-                + cast(regexp_extract({{second_date}}, '{{capture_str}}', 1) as int)
-                - cast(regexp_extract({{first_date}}, '{{capture_str}}', 1) as int)
-            {% endif %}
 
     {%- else -%}
 
