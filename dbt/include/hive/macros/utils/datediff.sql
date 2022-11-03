@@ -6,15 +6,30 @@
 
     {%- elif datepart == 'week' -%}
 
-        weekofyear({{second_date}}) -  weekofyear({{first_date}})
+        case when {{first_date}} < {{second_date}}
+            then
+                ceil( datediff({{second_date}}, {{first_date}}) / 7 )
+            else 
+                floor( datediff({{second_date}}, {{first_date}}) / 7 )
+            end
 
     {%- elif datepart == 'month' -%}
 
-        months_between({{second_date}}, {{first_date}})
+        case when {{first_date}} < {{second_date}}
+            then
+                ceil(months_between({{second_date}}, {{first_date}}))
+            else
+                floor(months_between({{second_date}}, {{first_date}}))
+            end
 
     {%- elif datepart == 'quarter' -%}
 
-        months_between({{second_date}}, {{first_date}}) / 3
+        case when {{first_date}} < {{second_date}}
+            then
+                ceil( months_between({{second_date}}, {{first_date}}) / 3 )
+            else
+                floor( months_between({{second_date}}, {{first_date}}) / 3 )
+            end
 
     {%- elif datepart == 'year' -%}
 
