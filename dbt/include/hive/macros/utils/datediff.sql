@@ -71,7 +71,7 @@
 
     {%- else -%}
 
-        {{ exceptions.raise_compiler_error("macro datediff not implemented for datepart ~ '" ~ datepart ~ "' ~ on Spark") }}
+        {{ exceptions.raise_compiler_error("macro datediff not implemented for datepart ~ '" ~ datepart ~ "' ~ on Hive") }}
 
     {%- endif -%}
 
