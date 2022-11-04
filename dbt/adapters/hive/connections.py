@@ -351,7 +351,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
             if bindings:
                 # to avoid None as being treated as string, convert it to empty string
-                bindings = map(lambda x: x if x else "", bindings)
+                bindings = list(map(lambda x: x if x else x if x != None and len(str(x)) > 0 else "", bindings))
 
             query_exception = None
             try:
