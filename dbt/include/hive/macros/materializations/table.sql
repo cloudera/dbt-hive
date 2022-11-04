@@ -26,6 +26,9 @@
 
   {{ run_hooks(pre_hooks) }}
 
+  -- grab current tables grants config for comparision later on
+  {% set grant_config = config.get('grants') %}
+
   -- setup: if the target relation already exists, drop it
   -- in case if the existing and future table is delta, we want to do a
   -- create or replace table instead of dropping, so we don't have the table unavailable
@@ -37,6 +40,9 @@
   {% call statement('main') -%}
     {{ create_table_as(False, target_relation, sql) }}
   {%- endcall %}
+  
+  {% set should_revoke = should_revoke(existing_relation, full_refresh_mode=True) %}
+  {% do apply_grants(target_relation, grant_config, should_revoke=should_revoke) %}
   
   {% do persist_docs(target_relation, model) %}
 
