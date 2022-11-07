@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 (Nov 4th, 2022)
+Now dbt-hive adapter supports dbt-core 1.2.0
+
+## 1.1.5 (Oct 28th, 2022)
+Updated instrumentation schema
+
 ## 1.1.4 (Sep 23rd, 2022)
 Added support for Kerberos auth mechanism. Along with an updated instrumentation package.
 
