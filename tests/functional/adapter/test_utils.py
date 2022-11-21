@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import pytest
 from dbt.tests.adapter.utils.base_utils import BaseUtils
 from dbt.tests.adapter.utils.test_any_value import BaseAnyValue
@@ -33,6 +34,9 @@ from dbt.tests.adapter.utils.test_right import BaseRight
 from dbt.tests.adapter.utils.test_safe_cast import BaseSafeCast
 from dbt.tests.adapter.utils.test_split_part import BaseSplitPart
 from dbt.tests.adapter.utils.test_string_literal import BaseStringLiteral
+from dbt.tests.adapter.utils.test_array_append import BaseArrayAppend
+from dbt.tests.adapter.utils.test_array_concat import BaseArrayConcat
+from dbt.tests.adapter.utils.test_array_construct import BaseArrayConstruct
 
 from dbt.tests.adapter.utils.fixture_any_value import (
     seeds__data_any_value_csv,
@@ -756,3 +760,14 @@ class TestDateDiff(BaseDateDiff):
                 models__test_datediff_sql, "datediff"
             ),
         }
+
+class TestArrayAppend(BaseArrayAppend):
+    pass
+
+
+class TestArrayConcat(BaseArrayConcat):
+    pass
+
+
+class TestArrayConstruct(BaseArrayConstruct):
+    pass
