@@ -534,7 +534,7 @@ diff as (
     SELECT {columns_a} FROM outliner t1
     LEFT JOIN overlap t2
     ON ({join_condition})
-    WHERE t2.`id` IS NULL
+    WHERE {columns_b} != {columns_a}
 ),
 diff_count as (
     SELECT
