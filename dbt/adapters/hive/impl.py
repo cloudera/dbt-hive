@@ -445,40 +445,6 @@ class HiveAdapter(SQLAdapter):
 
         self.connections.get_thread_connection().handle.close()
 
-    def get_rows_different_sql(
-        self,
-        relation_a: BaseRelation,
-        relation_b: BaseRelation,
-        column_names: Optional[List[str]] = None,
-        except_operator: str = "EXCEPT",
-    ) -> str:
-        """Generate SQL for a query that returns a single row with a two
-        columns: the number of rows that are different between the two
-        relations and the number of mismatched rows.
-        """
-        # This method only really exists for test reasons.
-        names: List[str]
-        if column_names is None:
-            columns = self.get_columns_in_relation(relation_a)
-            names = sorted((self.quote(c.name) for c in columns))
-        else:
-            names = sorted((self.quote(n) for n in column_names))
-        columns_csv = ", ".join(names)
-
-        columns_a_csv = ",".join(["t1.%s" % col for col in names])
-        columns_b_csv = ",".join(["t2.%s" % col for col in names])
-        join_condition_csv = " AND ".join(["t1.%s=t2.%s" % (col, col) for col in names])
-
-        sql = COLUMNS_EQUAL_SQL.format(
-            join_condition=join_condition_csv,
-            columns_a=columns_a_csv,
-            columns_b=columns_b_csv,
-            relation_a=str(relation_a),
-            relation_b=str(relation_b),
-        )
-
-        return sql
-
     ###
     # Methods about grants
     ###
@@ -512,34 +478,48 @@ class HiveAdapter(SQLAdapter):
                 grants_dict.update({privilege: [grantee]})
         return grants_dict
 
+    def get_rows_different_sql(
+        self,
+        relation_a: BaseRelation,
+        relation_b: BaseRelation,
+        column_names: Optional[List[str]] = None,
+        except_operator: str = "EXCEPT",
+    ) -> str:
+        """Generate SQL for a query that returns a single row with a two
+        columns: the number of rows that are different between the two
+        relations and the number of mismatched rows.
+        """
 
-# hive does something interesting with joins when both tables have the same
-# static values for the join condition and complains that the join condition is
-# "trivial". Which is true, though it seems like an unreasonable cause for
-# failure! It also doesn't like the `from foo, bar` syntax as opposed to
-# `from foo cross join bar`.
+        # This method only really exists for test reasons.
+        names: List[str]
+        if column_names is None:
+            columns = self.get_columns_in_relation(relation_a)
+            names = sorted((self.quote(c.name) for c in columns))
+        else:
+            names = sorted((self.quote(n) for n in column_names))
+        columns_csv = ", ".join(names)
+
+        sql = COLUMNS_EQUAL_SQL.format(
+            columns=columns_csv,
+            relation_a=str(relation_a),
+            relation_b=str(relation_b),
+            except_op=except_operator,
+        )
+
+        return sql
+
 COLUMNS_EQUAL_SQL = """
-with
-overlap as (
-    SELECT {columns_a}
-    FROM {relation_a} t1,{relation_b} t2
-    WHERE ({join_condition})
-),
-outliner as (
-    SELECT {columns_a} FROM {relation_a} t1
-    UNION
-    SELECT {columns_b} FROM {relation_b} t2
-),
-diff as (
-    SELECT {columns_a} FROM outliner t1
-    LEFT JOIN overlap t2
-    ON ({join_condition})
-    WHERE {columns_b} != {columns_a}
+with diff_missing as (
+    (SELECT {columns} FROM {relation_a} {except_op}
+             SELECT {columns} FROM {relation_b})
+        UNION ALL
+    (SELECT {columns} FROM {relation_b} {except_op}
+             SELECT {columns} FROM {relation_a})
 ),
 diff_count as (
     SELECT
         1 as id,
-        COUNT(*) as num_missing FROM diff
+        COUNT(*) as num_missing FROM diff_missing as a
 ), table_a as (
     SELECT COUNT(*) as num_rows FROM {relation_a}
 ), table_b as (
@@ -548,11 +528,11 @@ diff_count as (
     select
         1 as id,
         table_a.num_rows - table_b.num_rows as difference
-    from table_a
-    cross join table_b
+    from table_a, table_b
 )
 select
     row_count_diff.difference as row_count_difference,
     diff_count.num_missing as num_mismatched
-from row_count_diff cross join diff_count;
+from row_count_diff
+join diff_count using (id)
 """.strip()
