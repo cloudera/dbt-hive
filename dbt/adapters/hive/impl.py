@@ -456,6 +456,7 @@ class HiveAdapter(SQLAdapter):
         columns: the number of rows that are different between the two
         relations and the number of mismatched rows.
         """
+
         # This method only really exists for test reasons.
         names: List[str]
         if column_names is None:
@@ -465,81 +466,28 @@ class HiveAdapter(SQLAdapter):
             names = sorted((self.quote(n) for n in column_names))
         columns_csv = ", ".join(names)
 
-        columns_a_csv = ",".join(["t1.%s" % col for col in names])
-        columns_b_csv = ",".join(["t2.%s" % col for col in names])
-        join_condition_csv = " AND ".join(["t1.%s=t2.%s" % (col, col) for col in names])
-
         sql = COLUMNS_EQUAL_SQL.format(
-            join_condition=join_condition_csv,
-            columns_a=columns_a_csv,
-            columns_b=columns_b_csv,
+            columns=columns_csv,
             relation_a=str(relation_a),
             relation_b=str(relation_b),
+            except_op=except_operator,
         )
 
         return sql
 
-    ###
-    # Methods about grants
-    ###
-    def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
-        """Translate the result of `show grants` (or equivalent) to match the
-        grants which a user would configure in their project.
 
-        Ideally, the SQL to show grants should also be filtering:
-        filter OUT any grants TO the current user/role (e.g. OWNERSHIP).
-        If that's not possible in SQL, it can be done in this method instead.
-
-        :param grants_table: An agate table containing the query result of
-            the SQL returned by get_show_grant_sql
-        :return: A standardized dictionary matching the `grants` config
-        :rtype: dict
-        """
-        unsupported_privileges = ["INDEX", "READ", "WRITE"]
-
-        grants_dict: Dict[str, List[str]] = {}
-        for row in grants_table:
-            grantee = row["grantor"]
-            privilege = row["privilege"]
-            
-            # skip unsupported privileges 
-            if privilege in unsupported_privileges:
-                continue
-
-            if privilege in grants_dict.keys():
-                grants_dict[privilege].append(grantee)
-            else:
-                grants_dict.update({privilege: [grantee]})
-        return grants_dict
-
-
-# hive does something interesting with joins when both tables have the same
-# static values for the join condition and complains that the join condition is
-# "trivial". Which is true, though it seems like an unreasonable cause for
-# failure! It also doesn't like the `from foo, bar` syntax as opposed to
-# `from foo cross join bar`.
 COLUMNS_EQUAL_SQL = """
-with
-overlap as (
-    SELECT {columns_a}
-    FROM {relation_a} t1,{relation_b} t2
-    WHERE ({join_condition})
-),
-outliner as (
-    SELECT {columns_a} FROM {relation_a} t1
-    UNION
-    SELECT {columns_b} FROM {relation_b} t2
-),
-diff as (
-    SELECT {columns_a} FROM outliner t1
-    LEFT JOIN overlap t2
-    ON ({join_condition})
-    WHERE t2.`id` IS NULL
+with diff_missing as (
+    (SELECT {columns} FROM {relation_a} {except_op}
+             SELECT {columns} FROM {relation_b})
+        UNION ALL
+    (SELECT {columns} FROM {relation_b} {except_op}
+             SELECT {columns} FROM {relation_a})
 ),
 diff_count as (
     SELECT
         1 as id,
-        COUNT(*) as num_missing FROM diff
+        COUNT(*) as num_missing FROM diff_missing as a
 ), table_a as (
     SELECT COUNT(*) as num_rows FROM {relation_a}
 ), table_b as (
@@ -548,11 +496,11 @@ diff_count as (
     select
         1 as id,
         table_a.num_rows - table_b.num_rows as difference
-    from table_a
-    cross join table_b
+    from table_a, table_b
 )
 select
     row_count_diff.difference as row_count_difference,
     diff_count.num_missing as num_mismatched
-from row_count_diff cross join diff_count;
+from row_count_diff
+join diff_count using (id)
 """.strip()
