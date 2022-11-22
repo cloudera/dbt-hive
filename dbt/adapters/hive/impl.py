@@ -519,6 +519,12 @@ class HiveAdapter(SQLAdapter):
                 grants_dict.update({privilege: [grantee]})
         return grants_dict
 
+    def valid_incremental_strategies(self):
+        """The set of standard builtin strategies which this adapter supports out-of-the-box.
+        Not used to validate custom strategies defined by end users.
+        """
+        return ["append", "insert_overwrite", "merge"]
+
 
 # hive does something interesting with joins when both tables have the same
 # static values for the join condition and complains that the join condition is
