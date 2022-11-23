@@ -37,6 +37,7 @@ from dbt.tests.adapter.utils.test_string_literal import BaseStringLiteral
 from dbt.tests.adapter.utils.test_array_append import BaseArrayAppend
 from dbt.tests.adapter.utils.test_array_concat import BaseArrayConcat
 from dbt.tests.adapter.utils.test_array_construct import BaseArrayConstruct
+from dbt.tests.adapter.utils.test_current_timestamp import BaseCurrentTimestampNaive
 
 from dbt.tests.adapter.utils.fixture_any_value import (
     seeds__data_any_value_csv,
@@ -816,3 +817,5 @@ class TestArrayConstruct(BaseArrayConstruct):
             "actual.sql": models__array_construct_actual_sql,
             "expected.sql": models__array_construct_expected_sql,
         }
+class TestCurrentTimestamp(BaseCurrentTimestampNaive):
+    pass
