@@ -17,9 +17,9 @@ This code base is now being activiely developed and maintained by Innovation Acc
 
 Python >= 3.8
 
-dbt-core ~= 1.2.0
+dbt-core ~= 1.3.0
 
-impyla >= 0.18a5
+impyla >= 0.18
 
 ### Install
 ```
