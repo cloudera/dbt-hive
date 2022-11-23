@@ -19,7 +19,7 @@ def dbt_profile_target():
         'auth_type': 'LDAP',
         'use_http_transport': True,
         'use_ssl': True,
-        'username': os.getenv('HIVE_USER'),
+        'user': os.getenv('HIVE_USER'),
         'password': os.getenv('HIVE_PASSWORD'),
         'threads': 4,
     }
