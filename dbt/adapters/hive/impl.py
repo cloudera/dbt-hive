@@ -414,7 +414,7 @@ class HiveAdapter(SQLAdapter):
                 values = tuple(json_funcs[i](d) for i, d in enumerate(row))
                 permissions_object.append(OrderedDict(zip(row.keys(), values)))
 
-            permissions_json = json.dumps(permissions_object)
+            permissions_json = permissions_object
 
             payload = {
                 "event_type": "dbt_hive_debug_and_fetch_permissions",
@@ -438,7 +438,7 @@ class HiveAdapter(SQLAdapter):
                 values = tuple(json_funcs[i](d) for i, d in enumerate(row))
                 version_object.append(OrderedDict(zip(row.keys(), values)))
 
-            version_json = json.dumps(version_object)
+            version_json = version_object
 
             payload = {
                 "event_type": "dbt_hive_warehouse",
@@ -458,11 +458,9 @@ class HiveAdapter(SQLAdapter):
     def standardize_grants_dict(self, grants_table: agate.Table) -> dict:
         """Translate the result of `show grants` (or equivalent) to match the
         grants which a user would configure in their project.
-
         Ideally, the SQL to show grants should also be filtering:
         filter OUT any grants TO the current user/role (e.g. OWNERSHIP).
         If that's not possible in SQL, it can be done in this method instead.
-
         :param grants_table: An agate table containing the query result of
             the SQL returned by get_show_grant_sql
         :return: A standardized dictionary matching the `grants` config
@@ -514,7 +512,7 @@ class HiveAdapter(SQLAdapter):
         )
 
         return sql
-        
+
     def valid_incremental_strategies(self):
         """The set of standard builtin strategies which this adapter supports out-of-the-box.
         Not used to validate custom strategies defined by end users.
