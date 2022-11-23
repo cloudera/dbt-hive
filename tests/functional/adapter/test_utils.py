@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import pytest
 from dbt.tests.adapter.utils.base_utils import BaseUtils
 from dbt.tests.adapter.utils.test_any_value import BaseAnyValue
@@ -33,6 +34,10 @@ from dbt.tests.adapter.utils.test_right import BaseRight
 from dbt.tests.adapter.utils.test_safe_cast import BaseSafeCast
 from dbt.tests.adapter.utils.test_split_part import BaseSplitPart
 from dbt.tests.adapter.utils.test_string_literal import BaseStringLiteral
+from dbt.tests.adapter.utils.test_array_append import BaseArrayAppend
+from dbt.tests.adapter.utils.test_array_concat import BaseArrayConcat
+from dbt.tests.adapter.utils.test_array_construct import BaseArrayConstruct
+from dbt.tests.adapter.utils.test_current_timestamp import BaseCurrentTimestampNaive
 
 from dbt.tests.adapter.utils.fixture_any_value import (
     seeds__data_any_value_csv,
@@ -756,3 +761,61 @@ class TestDateDiff(BaseDateDiff):
                 models__test_datediff_sql, "datediff"
             ),
         }
+
+models__array_append_expected_sql = """
+select 1 as id, {{ array_construct(["1","2","3","4"], "string") }} as array_col union all
+select 2 as id, {{ array_construct(["0", "4"], "string") }} as array_col
+"""
+
+
+models__array_append_actual_sql = """
+select 1 as id, {{ array_append(array_construct(["1","2","3"], "string"), "4") }} as array_col union all
+select 2 as id, {{ array_append(array_construct(["0"], "string"), "4") }} as array_col
+"""
+class TestArrayAppend(BaseArrayAppend):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "actual.sql": models__array_append_actual_sql,
+            "expected.sql": models__array_append_expected_sql,
+        }
+
+
+models__array_concat_expected_sql = """
+select 1 as id, {{ array_construct(["1","2","3","4","5","6"], "string") }} as array_col union all
+select 2 as id, {{ array_construct(["0", "2"], "string") }} as array_col union all
+select 3 as id, {{ array_construct(["3", "0"], "string") }} as array_col
+"""
+
+models__array_concat_actual_sql = """
+select 1 as id, {{ array_concat(array_construct(["1","2","3"], "string"), array_construct(["4","5","6"], "string")) }} as array_col union all
+select 2 as id, {{ array_concat(array_construct(["0"], "string"), array_construct(["2"], "string")) }} as array_col union all
+select 3 as id, {{ array_concat(array_construct(["3"], "string"), array_construct(["0"], "string")) }} as array_col
+"""
+class TestArrayConcat(BaseArrayConcat):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "actual.sql": models__array_concat_actual_sql,
+            "expected.sql": models__array_concat_expected_sql,
+        }
+
+
+models__array_construct_expected_sql = """
+select 1 as id, {{ array_construct(["1","2","3"]) }} as array_col union all
+select 2 as id, {{ array_construct(["0"]) }} as array_col
+"""
+
+models__array_construct_actual_sql = """
+select 1 as id, {{ array_construct(["1","2","3"]) }} as array_col union all
+select 2 as id, {{ array_construct(["0"]) }} as array_col
+"""
+class TestArrayConstruct(BaseArrayConstruct):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "actual.sql": models__array_construct_actual_sql,
+            "expected.sql": models__array_construct_expected_sql,
+        }
+class TestCurrentTimestamp(BaseCurrentTimestampNaive):
+    pass
