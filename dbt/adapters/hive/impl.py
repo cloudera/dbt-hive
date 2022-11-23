@@ -242,6 +242,13 @@ class HiveAdapter(SQLAdapter):
 
         # raw_table_stats = metadata.get(KEY_TABLE_STATISTICS)
         # table_stats = HiveColumn.convert_table_stats(raw_table_stats)
+
+        # strip white spaces
+        new_metadata = {}
+        for k in metadata:
+            new_metadata[k.strip()] = metadata[k].strip() if metadata[k] else ""
+        metadata = new_metadata
+
         return [
             HiveColumn(
                 table_database=None,
@@ -505,6 +512,12 @@ class HiveAdapter(SQLAdapter):
         )
 
         return sql
+
+    def valid_incremental_strategies(self):
+        """The set of standard builtin strategies which this adapter supports out-of-the-box.
+        Not used to validate custom strategies defined by end users.
+        """
+        return ["append", "insert_overwrite", "merge"]
 
 
 COLUMNS_EQUAL_SQL = """
