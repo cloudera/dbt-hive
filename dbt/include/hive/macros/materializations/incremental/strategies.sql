@@ -104,6 +104,6 @@
 
 {% macro hive__get_incremental_default_sql(arg_dict) %}
   {#-- default mode is append, so return the sql for the same  #}  
-  {% do return(get_insert_into_sql(arg_dict["source_relation"], arg_dict["target_relation"]) %} 
+  {% do return(get_insert_into_sql(arg_dict["source_relation"], arg_dict["target_relation"])) %} 
 {% endmacro %}
 
