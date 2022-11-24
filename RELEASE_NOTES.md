@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.0 (Nov 25th, 2022)
+Now dbt-hive adapter supports dbt-core 1.3.0
+
 ## 1.2.0 (Nov 4th, 2022)
 Now dbt-hive adapter supports dbt-core 1.2.0
 
