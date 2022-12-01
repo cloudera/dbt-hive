@@ -27,6 +27,16 @@ from dbt.adapters.base import Credentials
 from dbt.events import AdapterLogger
 from decouple import config
 
+# all event types
+class TrackingEventType:
+    DEBUG = "debug_and_fetch_permission"
+    OPEN = "open"
+    CLOSE = "close"
+    START_QUERY = "start_query"
+    END_QUERY = "end_query"
+    INCREMENTAL = "incremental"
+    MODEL_ACCESS = "model_access"
+
 # global logger
 logger = AdapterLogger("Tracker")
 
@@ -45,6 +55,9 @@ profile_info = {}
 # Json object to store dbt deployment environment variables
 dbt_deployment_env_info = {}
 
+# Json object for warehouse information
+warehouse_info = { "warehouse_version": { "version": "NA", "build": "NA" } }
+
 def populate_platform_info(cred: Credentials, ver):
     """
     populate platform info to be passed on for tracking
@@ -57,9 +70,7 @@ def populate_platform_info(cred: Credentials, ver):
     platform_info["system"] = platform.system()
     # Architecture e.g. x86_64 ,arm, AMD64
     platform_info["machine"] = platform.machine()
-    # Full platform info e.g.
-    # Linux-2.6.32-32-server-x86_64-with-Ubuntu-10.04-lucid,
-    # Windows-2008ServerR2-6.1.7601-SP1
+    # Full platform info e.g Linux-2.6.32-32-server-x86_64-with-Ubuntu-10.04-lucid,Windows-2008ServerR2-6.1.7601-SP1
     platform_info["platform"] = platform.platform()
     # dbt core version
     platform_info[
@@ -76,9 +87,9 @@ def populate_dbt_deployment_env_info():
     default_value = "{}"  # if environment variables doesn't exist add empty json as default
     dbt_deployment_env_info["dbt_deployment_env"] = json.loads(os.environ.get('DBT_DEPLOYMENT_ENV', default_value))
 
-def populate_unique_ids(cred: Credentials):
+def populate_unique_ids(cred: Credentials, userkey="username"):
     host = str(cred.host).encode()
-    user = str(cred.username).encode()
+    user = str(getattr(cred, userkey)).encode()
     timestamp = str(time.time()).encode()
 
     # dbt invocation id
@@ -86,13 +97,13 @@ def populate_unique_ids(cred: Credentials):
        unique_ids["id"] = active_user.invocation_id
     else:
        unique_ids["id"] = "N/A"
+
     # hashed host name
     unique_ids["unique_host_hash"] = hashlib.md5(host).hexdigest()
     # hashed username
     unique_ids["unique_user_hash"] = hashlib.md5(user).hexdigest()
     # hashed session
     unique_ids["unique_session_hash"] = hashlib.md5(host + user + timestamp).hexdigest()
-
 
 def generate_profile_info(self):
     if not profile_info:
@@ -103,12 +114,14 @@ def generate_profile_info(self):
         # number of threads in profiles
         profile_info["no_of_threads"] = self.profile.threads
 
+def populate_warehouse_info(w_info):
+    warehouse_info["warehouse_version"]["version"] = w_info["version"]
+    warehouse_info["warehouse_version"]["build"] = w_info["build"]
 
 def _merge_keys(source_dict, dest_dict):
     for key, value in source_dict.items():
         dest_dict[key] = value
     return dest_dict
-
 
 def _get_sql_type(sql):
     if not sql:
@@ -121,10 +134,9 @@ def _get_sql_type(sql):
     else:
         sql_words = words[0].strip().split()
 
-    sql_type = " ".join(sql_words[: min(2, len(sql_words))]).lower()
+    sql_type = " ".join(sql_words[:min(2, len(sql_words))]).lower()
 
     return sql_type
-
 
 def fix_tracking_payload(given_payload):
     """
@@ -140,7 +152,7 @@ def fix_tracking_payload(given_payload):
     if "sql" in desired_payload:
         desired_payload["sql_type"] = _get_sql_type(desired_payload["sql"])
         del desired_payload["sql"]
-
+   
     desired_keys = [
         "auth",
         "connection_state",
@@ -150,7 +162,7 @@ def fix_tracking_payload(given_payload):
         "model_type",
         "permissions",
         "profile_name",
-        "sql_type",
+        "sql_type"
     ]
 
     for key in desired_keys:
@@ -176,10 +188,7 @@ def track_usage(tracking_payload):
 
     global usage_tracking
 
-    logger.debug(
-        f"Usage tracking flag {usage_tracking}."
-        f"To turn on/off use usage_tracking flag in profiles.yml"
-    )
+    logger.debug(f"Usage tracking flag {usage_tracking}. To turn on/off use usage_tracking flag in profiles.yml")
 
     # if usage_tracking is disabled, quit
     if not usage_tracking:
@@ -193,6 +202,7 @@ def track_usage(tracking_payload):
     tracking_payload = _merge_keys(platform_info, tracking_payload)
     tracking_payload = _merge_keys(dbt_deployment_env_info, tracking_payload)
     tracking_payload = _merge_keys(profile_info, tracking_payload)
+    tracking_payload = _merge_keys(warehouse_info, tracking_payload)
 
     # form the tracking data
     tracking_data = {"data": json.dumps(tracking_payload)}
@@ -227,10 +237,7 @@ def track_usage(tracking_payload):
 
         try:
             res = requests.post(
-                SNOWPLOW_ENDPOINT,
-                data=data,
-                headers=headers,
-                timeout=SNOWPLOW_TIMEOUT
+                SNOWPLOW_ENDPOINT, data=data, headers=headers, timeout=SNOWPLOW_TIMEOUT
             )
         except Exception as err:
             logger.debug(f"Usage tracking error. {err}")

@@ -168,6 +168,8 @@ class HiveConnectionWrapper(object):
 class HiveConnectionManager(SQLConnectionManager):
     TYPE = "hive"
 
+    hive_version = None
+
     def __init__(self, profile: AdapterRequiredConfig):
         super().__init__(profile)
         # generate profile related object for instrumentation.
@@ -225,6 +227,8 @@ class HiveConnectionManager(SQLConnectionManager):
             connection.state = ConnectionState.OPEN
             connection.handle = HiveConnectionWrapper(hive_conn)
             connection.handle.cursor()
+
+            HiveConnectionManager.fetch_hive_version(connection.handle)
         except Exception as exc:
             logger.debug("Connection error: {}".format(exc))
             connection_ex = exc
@@ -234,7 +238,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
         # track usage
         payload = {
-            "event_type": "dbt_hive_open",
+            "event_type": tracker.TrackingEventType.OPEN,
             "auth": auth_type,
             "connection_state": connection.state,
             "elapsed_time": "{:.2f}".format(
@@ -272,6 +276,31 @@ class HiveConnectionManager(SQLConnectionManager):
         connection.handle.cancel()
 
     @classmethod
+    def fetch_hive_version(cls, connection):
+
+        if HiveConnectionManager.hive_version: 
+            return HiveConnectionManager.hive_version
+
+        try:
+            sql = "select version()"
+            cursor = connection.cursor()
+            cursor.execute(sql)
+
+            res = cursor.fetchall()
+
+            HiveConnectionManager.hive_version = res[0][0].split(".")[0].strip()
+
+            tracker.populate_warehouse_info({ "version": HiveConnectionManager.hive_version, "build": res[0][0] })
+        except Exception as ex:
+            # we couldn't get the hive warehouse version
+            logger.debug(f"Cannot get hive version. Error: {ex}")
+            HiveConnectionManager.impala_version = "NA"
+
+            tracker.populate_warehouse_info({ "version": HiveConnectionManager.hive_version, "build": "NA" })
+
+        logger.debug(f"HIVE VERSION {'HiveConnectionManager.hive_version'}")
+
+    @classmethod
     def close(cls, connection):
         try:
             # if the connection is in closed or init, there's nothing to do
@@ -283,7 +312,7 @@ class HiveConnectionManager(SQLConnectionManager):
             connection_close_end_time = time.time()
 
             payload = {
-                "event_type": "dbt_hive_close",
+                "event_type": tracker.TrackingEventType.CLOSE,
                 "connection_state": ConnectionState.CLOSED,
                 "elapsed_time": "{:.2f}".format(
                     connection_close_end_time - connection_close_start_time
@@ -330,7 +359,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
             # track usage
             payload = {
-                "event_type": "dbt_hive_start_query",
+                "event_type": tracker.TrackingEventType.START_QUERY,
                 "sql": log_sql,
                 "profile_name": self.profile.profile_name
             }
@@ -368,7 +397,7 @@ class HiveConnectionManager(SQLConnectionManager):
             elapsed_time = time.time() - pre
 
             payload = {
-                "event_type": "dbt_hive_end_query",
+                "event_type": tracker.TrackingEventType.END_QUERY,
                 "sql": log_sql,
                 "elapsed_time": "{:.2f}".format(elapsed_time),
                 "status": query_status,
