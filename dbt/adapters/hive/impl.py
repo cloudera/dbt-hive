@@ -417,7 +417,7 @@ class HiveAdapter(SQLAdapter):
             permissions_json = permissions_object
 
             payload = {
-                "event_type": "dbt_hive_debug_and_fetch_permissions",
+                "event_type": tracker.TrackingEventType.DEBUG,
                 "permissions": permissions_json,
             }
             tracker.track_usage(payload)
@@ -426,29 +426,6 @@ class HiveAdapter(SQLAdapter):
                 f"Failed to fetch permissions for user: {username}. Exception: {ex}"
             )
             self.connections.get_thread_connection().handle.close()
-
-        # query warehouse version
-        try:
-            sql_query = "select version()"
-            _, table = self.execute(sql_query, True, True)
-            version_object = []
-            json_funcs = [c.jsonify for c in table.column_types]
-
-            for row in table.rows:
-                values = tuple(json_funcs[i](d) for i, d in enumerate(row))
-                version_object.append(OrderedDict(zip(row.keys(), values)))
-
-            version_json = version_object
-
-            payload = {
-                "event_type": "dbt_hive_warehouse",
-                "warehouse_version": version_json,
-            }
-            tracker.track_usage(payload)
-        except Exception as ex:
-            logger.error(
-                f"Failed to fetch warehouse version. Exception: {ex}"
-            )
 
         self.connections.get_thread_connection().handle.close()
 
