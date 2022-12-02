@@ -351,6 +351,15 @@ class HiveConnectionManager(SQLConnectionManager):
                 additional_info = {}
                 logger.debug(f"Unable to get query header {ex}")
 
+        strip_sql = sql.split("*/")
+        if len(strip_sql) > 1:
+            strip_sql = strip_sql[1]
+        else:
+            strip_sql = strip_sql[0]
+
+        if strip_sql.strip().lower().startswith("set"):
+            sql = strip_sql
+
         with self.exception_handler(sql):
             if abridge_sql_log:
                 log_sql = "{}...".format(sql[:512])
