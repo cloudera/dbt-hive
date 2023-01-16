@@ -107,7 +107,8 @@ class HiveConnectionWrapper(object):
         self._cursor = None
 
     def cursor(self):
-        self._cursor = self.handle.cursor()
+        if not self._cursor:
+            self._cursor = self.handle.cursor()
         return self
 
     def cancel(self):
