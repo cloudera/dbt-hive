@@ -74,11 +74,8 @@
             {%- if not loop.last %}, {%- endif %}
         {%- endfor %}
         {%- else %} * {% endif %}
-    
-      when not matched then insert 
-        ({{get_update_csv(update_columns)}})
-      values 
-        ({{update_cols_csv}})
+
+      when not matched then insert *
 {% endmacro %}
 
 
