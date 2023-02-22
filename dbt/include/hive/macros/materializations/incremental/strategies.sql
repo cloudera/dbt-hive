@@ -53,6 +53,7 @@
 
 {% macro hive__get_merge_sql(target, source, unique_key, dest_columns, predicates=none) %}
   {%- set update_columns = config.get("merge_update_columns") -%}
+  {%- set update_all_columns = config.get("merge_all_columns") -%}
   {%- set update_cols_csv = get_update_csv(update_columns, 'DBT_INTERNAL_SOURCE') -%}
   
   {% set merge_condition %}
@@ -75,7 +76,14 @@
         {%- endfor %}
         {%- else %} * {% endif %}
 
-      when not matched then insert *
+      {% if update_all_columns == true -%} 
+          when not matched then insert *
+      {%- else %}
+          when not matched then insert 
+            ({{get_update_csv(update_columns)}})
+          values 
+            ({{update_cols_csv}})
+      {%- endif %}
 {% endmacro %}
 
 
