@@ -116,6 +116,7 @@
 {% macro hive__create_table_as(temporary, relation, sql) -%}
   {%- set _properties = config.get('properties') -%}
   {%- set is_external = config.get('external') -%}
+  {%- set is_iceberg = config.get('is_iceberg') -%}
 
   {% if temporary -%}
     {{ create_temporary_view(relation, sql) }}
@@ -125,10 +126,11 @@
     {% else %}
       create {% if is_external == true -%}external{%- endif %} table {{ relation }}
     {% endif %}
-    {{ file_format_clause() }}
     {{ options_clause() }}
     {{ partition_cols(label="partitioned by") }}
     {{ clustered_cols(label="clustered by") }}
+    {{ file_format_clause() }}
+    {% if is_iceberg == true -%} STORED BY ICEBERG {%- endif %}
     {{ location_clause() }}
     {{ comment_clause() }}
     {{ properties_clause(_properties) }}
