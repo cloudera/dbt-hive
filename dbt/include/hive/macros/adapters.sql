@@ -129,8 +129,8 @@
     {{ options_clause() }}
     {{ partition_cols(label="partitioned by") }}
     {{ clustered_cols(label="clustered by") }}
-    {{ file_format_clause() }}
     {% if is_iceberg == true -%} STORED BY ICEBERG {%- endif %}
+    {{ file_format_clause() }}
     {{ location_clause() }}
     {{ comment_clause() }}
     {{ properties_clause(_properties) }}
