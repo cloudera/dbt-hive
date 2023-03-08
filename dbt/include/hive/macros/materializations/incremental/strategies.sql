@@ -52,21 +52,33 @@
 {% endmacro %}
 
 {% macro hive__get_merge_sql(target, source, unique_key, dest_columns, predicates=none) %}
+  {%- set predicates = [] if predicates is none else [] + predicates -%}
   {%- set update_columns = config.get("merge_update_columns") -%}
+  {%- set insert_columns = config.get("merge_insert_columns") -%}
   {%- set update_cols_csv = get_update_csv(update_columns, 'DBT_INTERNAL_SOURCE') -%}
-  
-  {% set merge_condition %}
-    {% if unique_key %}
-        on DBT_INTERNAL_SOURCE.{{ unique_key }} = DBT_INTERNAL_DEST.{{ unique_key }}
-    {% else %}
-        on false
-    {% endif %}
-  {% endset %}
+  {%- set insert_cols_csv = get_update_csv(insert_columns, 'DBT_INTERNAL_SOURCE') -%}
+
+  {% if unique_key %}
+      {% if unique_key is sequence and unique_key is not mapping and unique_key is not string %}
+          {% for key in unique_key %}
+              {% set this_key_match %}
+                  DBT_INTERNAL_SOURCE.{{ key }} = DBT_INTERNAL_DEST.{{ key }}
+              {% endset %}
+              {% do predicates.append(this_key_match) %}
+          {% endfor %}
+      {% else %}
+          {% set unique_key_match %}
+              DBT_INTERNAL_SOURCE.{{ unique_key }} = DBT_INTERNAL_DEST.{{ unique_key }}
+          {% endset %}
+          {% do predicates.append(unique_key_match) %}
+      {% endif %}
+  {% else %}
+      {% do predicates.append('FALSE') %}
+  {% endif %}
   
     merge into {{ target }} as DBT_INTERNAL_DEST
       using {{ source.include(schema=true) }} as DBT_INTERNAL_SOURCE
-      
-      {{ merge_condition }}
+      on {{ predicates | join(' and ') }}
       
       when matched then update set
         {% if update_columns -%}{%- for column_name in update_columns %}
@@ -74,11 +86,18 @@
             {%- if not loop.last %}, {%- endif %}
         {%- endfor %}
         {%- else %} * {% endif %}
-    
-      when not matched then insert 
-        ({{get_update_csv(update_columns)}})
-      values 
-        ({{update_cols_csv}})
+
+      {% if insert_columns %} 
+          when not matched then insert 
+            ({{get_update_csv(insert_columns)}})
+          values 
+            ({{insert_cols_csv}})
+      {%- else %}
+          when not matched then insert 
+            ({{get_update_csv(update_columns)}})
+          values 
+            ({{update_cols_csv}})
+      {%- endif %}
 {% endmacro %}
 
 
