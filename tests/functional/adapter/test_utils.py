@@ -130,8 +130,8 @@ from dbt.tests.adapter.utils.fixture_split_part import (
 )
 
 from dbt.tests.adapter.utils.fixture_escape_single_quotes import (
-     models__test_escape_single_quotes_quote_sql,
-     models__test_escape_single_quotes_yml,
+    models__test_escape_single_quotes_quote_sql,
+    models__test_escape_single_quotes_yml,
 )
 
 from dbt.tests.adapter.utils.fixture_datediff import (
@@ -171,6 +171,7 @@ on calculate.key_name = data_output.key_name
 and calculate.static_col = data_output.static_col
 """
 
+
 class TestAnyValue(BaseAnyValue):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -187,6 +188,7 @@ class TestAnyValue(BaseAnyValue):
                 models__test_any_value_sql, "any_value"
             ),
         }
+
 
 models__test_bool_or_sql = """
 with util_data as (
@@ -219,6 +221,7 @@ left join data_output
 on calculate.key = data_output.key
 """
 
+
 class TestBoolOr(BaseBoolOr):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -236,6 +239,7 @@ class TestBoolOr(BaseBoolOr):
             ),
         }
 
+
 models__test_cast_bool_to_text_sql = """
 with util_data as (
 
@@ -252,6 +256,7 @@ select
 
 from util_data
 """
+
 
 class TestCastBoolToText(BaseCastBoolToText):
     @pytest.fixture(scope="class")
@@ -277,6 +282,8 @@ select
 
 from util_data
 """
+
+
 class TestConcat(BaseConcat):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -288,6 +295,7 @@ class TestConcat(BaseConcat):
             "test_concat.yml": models__test_concat_yml,
             "test_concat.sql": self.interpolate_macro_namespace(models__test_concat_sql, "concat"),
         }
+
 
 models__test_dateadd_sql = """
 with util_data as (
@@ -308,6 +316,7 @@ select
 
 from util_data
 """
+
 
 class TestDateAdd(BaseDateAdd):
     @pytest.fixture(scope="class")
@@ -340,6 +349,8 @@ class TestDateAdd(BaseDateAdd):
                 models__test_dateadd_sql, "dateadd"
             ),
         }
+
+
 models__test_date_trunc_sql = """
 with util_data as (
 
@@ -361,6 +372,8 @@ select
 
 from util_data
 """
+
+
 class TestDateTrunc(BaseDateTrunc):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -375,10 +388,12 @@ class TestDateTrunc(BaseDateTrunc):
             ),
         }
 
+
 models__test_escape_single_quotes_quote_sql = """
  select '{{ escape_single_quotes("they're") }}' as actual, 'they\\'re' as expected union all
  select '{{ escape_single_quotes("they are") }}' as actual, 'they are' as expected
 """
+
 
 class TestEscapeSingleQuotes(BaseEscapeSingleQuotesQuote):
     @pytest.fixture(scope="class")
@@ -408,6 +423,8 @@ select
 
 from util_data
 """
+
+
 class TestHash(BaseHash):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -443,6 +460,8 @@ select
 
 from util_data
 """
+
+
 class TestLastDay(BaseLastDay):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -472,6 +491,8 @@ select
 
 from util_data
 """
+
+
 class TestLength(BaseLength):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -483,6 +504,7 @@ class TestLength(BaseLength):
             "test_length.yml": models__test_length_yml,
             "test_length.sql": self.interpolate_macro_namespace(models__test_length_sql, "length"),
         }
+
 
 models__test_listagg_sql = """
 with util_data as (
@@ -566,6 +588,7 @@ seeds__data_listagg_output_csv = """group_col,expected,version
 3,"g,g,g",no_params
 """
 
+
 class TestListagg(BaseListagg):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -583,6 +606,7 @@ class TestListagg(BaseListagg):
             ),
         }
 
+
 models__test_position_sql = """
 with util_data as (
     select * from {{ ref('data_position') }}
@@ -592,6 +616,8 @@ select
     result as expected
 from util_data
 """
+
+
 class TestPosition(BasePosition):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -606,6 +632,7 @@ class TestPosition(BasePosition):
             ),
         }
 
+
 models__test_replace_sql = """
 with util_data as (
     select
@@ -619,6 +646,8 @@ select
     result as expected
 from util_data
 """
+
+
 class TestReplace(BaseReplace):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -633,6 +662,7 @@ class TestReplace(BaseReplace):
             ),
         }
 
+
 models__test_right_sql = """
 with util_data as (
     select * from {{ ref('data_right') }}
@@ -642,6 +672,8 @@ select
     coalesce(output, '') as expected
 from util_data
 """
+
+
 class TestRight(BaseRight):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -668,6 +700,8 @@ select
 
 from util_data
 """
+
+
 class TestSafeCast(BaseSafeCast):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -682,6 +716,7 @@ class TestSafeCast(BaseSafeCast):
                 "type_string",
             ),
         }
+
 
 models__test_split_part_sql = """
 with util_data as (
@@ -702,6 +737,8 @@ select
     result_3 as expected
 from util_data
 """
+
+
 class TestSplitPart(BaseSplitPart):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -719,6 +756,7 @@ class TestSplitPart(BaseSplitPart):
 
 class TestStringLiteral(BaseStringLiteral):
     pass
+
 
 models__test_datediff_sql = """
 with util_data as (
@@ -748,6 +786,7 @@ union all select {{ datediff("'1999-12-31 23:59:59.999999'", "'2000-01-01 00:00:
 union all select {{ datediff("'1999-12-31 23:59:59.999999'", "'2000-01-01 00:00:00.000000'", "year") }} as actual, 1 as expected
 """
 
+
 class TestDateDiff(BaseDateDiff):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -762,6 +801,7 @@ class TestDateDiff(BaseDateDiff):
             ),
         }
 
+
 models__array_append_expected_sql = """
 select 1 as id, {{ array_construct(["1","2","3","4"], "string") }} as array_col union all
 select 2 as id, {{ array_construct(["0", "4"], "string") }} as array_col
@@ -772,6 +812,8 @@ models__array_append_actual_sql = """
 select 1 as id, {{ array_append(array_construct(["1","2","3"], "string"), "4") }} as array_col union all
 select 2 as id, {{ array_append(array_construct(["0"], "string"), "4") }} as array_col
 """
+
+
 class TestArrayAppend(BaseArrayAppend):
     @pytest.fixture(scope="class")
     def models(self):
@@ -792,6 +834,8 @@ select 1 as id, {{ array_concat(array_construct(["1","2","3"], "string"), array_
 select 2 as id, {{ array_concat(array_construct(["0"], "string"), array_construct(["2"], "string")) }} as array_col union all
 select 3 as id, {{ array_concat(array_construct(["3"], "string"), array_construct(["0"], "string")) }} as array_col
 """
+
+
 class TestArrayConcat(BaseArrayConcat):
     @pytest.fixture(scope="class")
     def models(self):
@@ -810,6 +854,8 @@ models__array_construct_actual_sql = """
 select 1 as id, {{ array_construct(["1","2","3"]) }} as array_col union all
 select 2 as id, {{ array_construct(["0"]) }} as array_col
 """
+
+
 class TestArrayConstruct(BaseArrayConstruct):
     @pytest.fixture(scope="class")
     def models(self):
@@ -817,5 +863,7 @@ class TestArrayConstruct(BaseArrayConstruct):
             "actual.sql": models__array_construct_actual_sql,
             "expected.sql": models__array_construct_expected_sql,
         }
+
+
 class TestCurrentTimestamp(BaseCurrentTimestampNaive):
     pass

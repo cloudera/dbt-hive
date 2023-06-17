@@ -15,7 +15,7 @@
 #}
 
 {% macro get_insert_overwrite_sql(source_relation, target_relation) %}
-    
+
     {%- set dest_columns = adapter.get_columns_in_relation(target_relation) -%}
     {%- set dest_cols_csv = dest_columns | map(attribute='quoted') | join(', ') -%}
     insert overwrite table {{ target_relation }}
@@ -75,11 +75,11 @@
   {% else %}
       {% do predicates.append('FALSE') %}
   {% endif %}
-  
+
     merge into {{ target }} as DBT_INTERNAL_DEST
       using {{ source.include(schema=true) }} as DBT_INTERNAL_SOURCE
       on {{ predicates | join(' and ') }}
-      
+
       when matched then update set
         {% if update_columns -%}{%- for column_name in update_columns %}
             {{ column_name }} = DBT_INTERNAL_SOURCE.{{ column_name }}
@@ -87,15 +87,15 @@
         {%- endfor %}
         {%- else %} * {% endif %}
 
-      {% if insert_columns %} 
-          when not matched then insert 
+      {% if insert_columns %}
+          when not matched then insert
             ({{get_update_csv(insert_columns)}})
-          values 
+          values
             ({{insert_cols_csv}})
       {%- else %}
-          when not matched then insert 
+          when not matched then insert
             ({{get_update_csv(update_columns)}})
-          values 
+          values
             ({{update_cols_csv}})
       {%- endif %}
 {% endmacro %}
@@ -122,7 +122,6 @@
 
 
 {% macro hive__get_incremental_default_sql(arg_dict) %}
-  {#-- default mode is append, so return the sql for the same  #}  
-  {% do return(get_insert_into_sql(arg_dict["source_relation"], arg_dict["target_relation"])) %} 
+  {#-- default mode is append, so return the sql for the same  #}
+  {% do return(get_insert_into_sql(arg_dict["source_relation"], arg_dict["target_relation"])) %}
 {% endmacro %}
-

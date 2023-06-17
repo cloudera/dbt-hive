@@ -25,7 +25,7 @@
         case when {{first_date}} < {{second_date}}
             then
                 ceil( datediff({{second_date}}, {{first_date}}) / 7 )
-            else 
+            else
                 floor( datediff({{second_date}}, {{first_date}}) / 7 )
             end
 
@@ -62,10 +62,10 @@
 
         case when {{first_date}} < {{second_date}}
             then ceil((
-                unix_timestamp( {{second_date}} ) - unix_timestamp( {{first_date}} ) 
+                unix_timestamp( {{second_date}} ) - unix_timestamp( {{first_date}} )
             ) / {{divisor}})
             else floor((
-                unix_timestamp( {{second_date}} ) - unix_timestamp( {{first_date}} ) 
+                unix_timestamp( {{second_date}} ) - unix_timestamp( {{first_date}} )
             ) / {{divisor}})
             end
 

@@ -18,8 +18,8 @@
     {% if datepart == 'quarter' %}
         cast(
             {{
-                dbt.dateadd('day', '-1', 
-                    dbt.dateadd('month', '3', 
+                dbt.dateadd('day', '-1',
+                    dbt.dateadd('month', '3',
                         dbt.date_trunc('month', date)
                     )
                 )
@@ -28,8 +28,8 @@
     {% else %}
         cast(
             {{
-                dbt.dateadd('day', '-1', 
-                    dbt.dateadd(datepart, '1', 
+                dbt.dateadd('day', '-1',
+                    dbt.dateadd(datepart, '1',
                         dbt.date_trunc(datepart, date)
                     )
                 )

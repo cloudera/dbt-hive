@@ -27,5 +27,5 @@
 
         {{ exceptions.raise_compiler_error("macro datediff not implemented for datepart ~ '" ~ datepart ~ "' ~ on Spark") }}
 
-    {%- endif -%}   
+    {%- endif -%}
 {% endmacro %}

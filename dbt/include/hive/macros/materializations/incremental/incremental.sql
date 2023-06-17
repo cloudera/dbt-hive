@@ -15,7 +15,7 @@
 #}
 
 {% materialization incremental, adapter='hive' -%}
-  
+
   -- relations
   {%- set existing_relation = load_cached_relation(this) -%}
   {%- set target_relation = this.incorporate(type='table') -%}
@@ -81,7 +81,7 @@
       {% set build_sql = get_create_table_as_sql(False, intermediate_relation, sql) %}
       {% set need_swap = true %}
   {% else %}
-    {{ drop_relation(temp_relation) }} 
+    {{ drop_relation(temp_relation) }}
     {% do run_query(get_create_table_as_sql(False, temp_relation, sql)) %}
     {% do to_drop.append(temp_relation) %}
     {% do adapter.expand_target_column_types(

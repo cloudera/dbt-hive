@@ -14,16 +14,20 @@
 import time
 import json
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import dbt.exceptions
 import impala.dbapi
 from dbt.adapters.base import Credentials
 from dbt.adapters.sql import SQLConnectionManager
-from dbt.contracts.connection import (AdapterResponse, AdapterRequiredConfig, Connection,
-                                      ConnectionState)
+from dbt.contracts.connection import (
+    AdapterResponse,
+    AdapterRequiredConfig,
+    Connection,
+    ConnectionState,
+)
 from dbt.events import AdapterLogger
 from dbt.events.functions import fire_event
 from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
@@ -44,6 +48,7 @@ logger = AdapterLogger("Hive")
 NUMBERS = DECIMALS + (int, float)
 
 DEFAULT_HIVE_PORT = 10000
+
 
 @dataclass
 class HiveCredentials(Credentials):
@@ -97,7 +102,7 @@ class HiveCredentials(Credentials):
         return "host", "schema", "user"
 
 
-class HiveConnectionWrapper(object):
+class HiveConnectionWrapper:
     """Wrap a Hive connection in a way that no-ops transactions"""
 
     # https://forums.databricks.com/questions/2157/in-apache-hive-sql-can-we-roll-back-the-transacti.html  # noqa
@@ -117,8 +122,8 @@ class HiveConnectionWrapper(object):
             # the connection is cancelled
             try:
                 self._cursor.cancel()
-            except EnvironmentError as exc:
-                logger.debug("Exception while cancelling query: {}".format(exc))
+            except OSError as exc:
+                logger.debug(f"Exception while cancelling query: {exc}")
 
     def close(self):
         if self._cursor:
@@ -126,8 +131,8 @@ class HiveConnectionWrapper(object):
             # the connection is cancelled
             try:
                 self._cursor.close()
-            except EnvironmentError as exc:
-                logger.debug("Exception while closing cursor: {}".format(exc))
+            except OSError as exc:
+                logger.debug(f"Exception while closing cursor: {exc}")
 
     def rollback(self, *args, **kwargs):
         logger.debug("NotImplemented: rollback")
@@ -221,7 +226,7 @@ class HiveConnectionManager(SQLConnectionManager):
                 )
             else:
                 raise dbt.exceptions.DbtProfileError(
-                    "Invalid auth_type {} provided".format(credentials.auth_type)
+                    f"Invalid auth_type {credentials.auth_type} provided"
                 )
             connection_end_time = time.time()
 
@@ -231,7 +236,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
             HiveConnectionManager.fetch_hive_version(connection.handle)
         except Exception as exc:
-            logger.debug("Connection error: {}".format(exc))
+            logger.debug(f"Connection error: {exc}")
             connection_ex = exc
             connection.state = ConnectionState.FAIL
             connection.handle = None
@@ -242,13 +247,11 @@ class HiveConnectionManager(SQLConnectionManager):
             "event_type": tracker.TrackingEventType.OPEN,
             "auth": auth_type,
             "connection_state": connection.state,
-            "elapsed_time": "{:.2f}".format(
-                connection_end_time - connection_start_time
-            ),
+            "elapsed_time": f"{connection_end_time - connection_start_time:.2f}",
         }
 
         if connection.state == ConnectionState.FAIL:
-            payload["connection_exception"] = "{}".format(connection_ex)
+            payload["connection_exception"] = f"{connection_ex}"
             tracker.track_usage(payload)
             raise connection_ex
         else:
@@ -261,13 +264,17 @@ class HiveConnectionManager(SQLConnectionManager):
         try:
             yield
         except HttpError as httpError:
-            logger.debug("Authorization error: {}".format(httpError))
-            raise dbt.exceptions.RuntimeException ("HTTP Authorization error: " + str(httpError) + ", please check your credentials")
+            logger.debug(f"Authorization error: {httpError}")
+            raise dbt.exceptions.RuntimeException(
+                "HTTP Authorization error: " + str(httpError) + ", please check your credentials"
+            )
         except HiveServer2Error as hiveError:
-            logger.debug("Server connection error: {}".format(hiveError))
-            raise dbt.exceptions.RuntimeException ("Unable to establish connection to Hive server: " + str(hiveError))
+            logger.debug(f"Server connection error: {hiveError}")
+            raise dbt.exceptions.RuntimeException(
+                "Unable to establish connection to Hive server: " + str(hiveError)
+            )
         except Exception as exc:
-            logger.debug("Error while running:\n{}".format(sql))
+            logger.debug(f"Error while running:\n{sql}")
             logger.debug(exc)
             if len(exc.args) == 0:
                 raise
@@ -278,8 +285,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
     @classmethod
     def fetch_hive_version(cls, connection):
-
-        if HiveConnectionManager.hive_version: 
+        if HiveConnectionManager.hive_version:
             return HiveConnectionManager.hive_version
 
         try:
@@ -291,13 +297,17 @@ class HiveConnectionManager(SQLConnectionManager):
 
             HiveConnectionManager.hive_version = res[0][0].split(".")[0].strip()
 
-            tracker.populate_warehouse_info({ "version": HiveConnectionManager.hive_version, "build": res[0][0] })
+            tracker.populate_warehouse_info(
+                {"version": HiveConnectionManager.hive_version, "build": res[0][0]}
+            )
         except Exception as ex:
             # we couldn't get the hive warehouse version
             logger.debug(f"Cannot get hive version. Error: {ex}")
             HiveConnectionManager.impala_version = "NA"
 
-            tracker.populate_warehouse_info({ "version": HiveConnectionManager.hive_version, "build": "NA" })
+            tracker.populate_warehouse_info(
+                {"version": HiveConnectionManager.hive_version, "build": "NA"}
+            )
 
         logger.debug(f"HIVE VERSION {'HiveConnectionManager.hive_version'}")
 
@@ -338,7 +348,6 @@ class HiveConnectionManager(SQLConnectionManager):
         bindings: Optional[Any] = None,
         abridge_sql_log: bool = False,
     ) -> Tuple[Connection, Any]:
-
         connection = self.get_thread_connection()
         if auto_begin and connection.transaction_open is False:
             self.begin()
@@ -363,7 +372,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
         with self.exception_handler(sql):
             if abridge_sql_log:
-                log_sql = "{}...".format(sql[:512])
+                log_sql = f"{sql[:512]}..."
             else:
                 log_sql = sql
 
@@ -371,7 +380,7 @@ class HiveConnectionManager(SQLConnectionManager):
             payload = {
                 "event_type": tracker.TrackingEventType.START_QUERY,
                 "sql": log_sql,
-                "profile_name": self.profile.profile_name
+                "profile_name": self.profile.profile_name,
             }
 
             for key, value in additional_info.items():
@@ -393,7 +402,9 @@ class HiveConnectionManager(SQLConnectionManager):
 
             if bindings:
                 # to avoid None as being treated as string, convert it to empty string
-                bindings = list(map(lambda x: x if x else x if x != None and len(str(x)) > 0 else "", bindings))
+                bindings = list(
+                    map(lambda x: x if x else x if x != None and len(str(x)) > 0 else "", bindings)
+                )
 
             query_exception = None
             try:
@@ -409,15 +420,15 @@ class HiveConnectionManager(SQLConnectionManager):
             payload = {
                 "event_type": tracker.TrackingEventType.END_QUERY,
                 "sql": log_sql,
-                "elapsed_time": "{:.2f}".format(elapsed_time),
+                "elapsed_time": f"{elapsed_time:.2f}",
                 "status": query_status,
-                "profile_name": self.profile.profile_name
+                "profile_name": self.profile.profile_name,
             }
 
             tracker.track_usage(payload)
 
             # re-raise query exception so that it propogates to dbt
-            if (query_exception):
+            if query_exception:
                 raise query_exception
 
             fire_event(
@@ -452,4 +463,3 @@ class HiveConnectionManager(SQLConnectionManager):
                     "The config '{}' is required when using the {} method"
                     " to connect to Hive".format(key, method)
                 )
-
