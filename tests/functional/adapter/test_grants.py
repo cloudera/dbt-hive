@@ -13,6 +13,7 @@ from dbt.tests.util import (
     get_connection,
 )
 
+
 class TestModelGrantsHive(BaseModelGrants):
     def privilege_grantee_name_overrides(self):
         return {
@@ -22,11 +23,12 @@ class TestModelGrantsHive(BaseModelGrants):
 
     def assert_expected_grants_match_actual(self, project, relation_name, expected_grants):
         actual_grants = self.get_grants_on_relation(project, relation_name)
-        
+
         for grant_key in actual_grants:
             if grant_key not in expected_grants:
                 return False
         return True
+
 
 user2_incremental_model_schema_yml = """
 version: 2
@@ -37,6 +39,7 @@ models:
       grants:
         select: ["{{ env_var('DBT_TEST_USER_2') }}"]
 """
+
 
 class TestIncrementalGrantsHive(BaseIncrementalGrants):
     @pytest.fixture(scope="class")
@@ -101,7 +104,7 @@ class TestIncrementalGrantsHive(BaseIncrementalGrants):
 
     def assert_expected_grants_match_actual(self, project, relation_name, expected_grants):
         actual_grants = self.get_grants_on_relation(project, relation_name)
-        
+
         for grant_key in actual_grants:
             if grant_key not in expected_grants:
                 return False
@@ -134,6 +137,7 @@ seeds:
         select: []
 """
 
+
 class TestSeedGrantsHive(BaseSeedGrants):
     def assert_expected_grants_match_actual(self, project, relation_name, expected_grants):
         actual_grants = self.get_grants_on_relation(project, relation_name)
@@ -142,7 +146,7 @@ class TestSeedGrantsHive(BaseSeedGrants):
             if grant_key not in expected_grants:
                 return False
         return True
-    
+
     def test_seed_grants(self, project, get_test_users):
         test_users = get_test_users
         select_privilege_name = self.privilege_grantee_name_overrides()["select"]
@@ -245,6 +249,7 @@ models:
         fake_privilege: ["{{ env_var('DBT_TEST_USER_2') }}"]
 """
 
+
 class TestInvalidGrantsHive(BaseInvalidGrants):
     def assert_expected_grants_match_actual(self, project, relation_name, expected_grants):
         actual_grants = self.get_grants_on_relation(project, relation_name)
@@ -280,4 +285,3 @@ class TestInvalidGrantsHive(BaseInvalidGrants):
         write_file(yaml_file, project.project_root, "models", "schema.yml")
         (results, log_output) = run_dbt_and_capture(["--debug", "run"], expect_pass=False)
         assert self.privilege_does_not_exist_error() in log_output
-

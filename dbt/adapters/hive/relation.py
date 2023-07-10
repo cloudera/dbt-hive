@@ -47,9 +47,7 @@ class HiveRelation(BaseRelation):
 
     def __post_init__(self):
         if self.database and self.database != self.schema:
-            raise RuntimeException(
-                "Cannot set database `{}` in hive!".format(self.database)
-            )
+            raise RuntimeException(f"Cannot set database `{self.database}` in hive!")
         if self.type:
             tracker.track_usage(
                 {

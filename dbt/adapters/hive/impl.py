@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 from collections import OrderedDict
 from concurrent.futures import Future
 from dataclasses import dataclass
@@ -99,15 +98,13 @@ class HiveAdapter(SQLAdapter):
         return "timestamp"
 
     def quote(self, identifier):
-        return "`{}`".format(identifier)
+        return f"`{identifier}`"
 
     def add_schema_to_cache(self, schema) -> str:
         """Cache a new schema in dbt. It will show up in `list relations`."""
         if schema is None:
             name = self.nice_connection_name()
-            dbt.exceptions.raise_compiler_error(
-                "Attempted to cache a null schema for {}".format(name)
-            )
+            dbt.exceptions.raise_compiler_error(f"Attempted to cache a null schema for {name}")
         if dbt.flags.USE_CACHE:
             self.cache.add_schema(None, schema)
         # so jinja doesn't render things
@@ -127,20 +124,14 @@ class HiveAdapter(SQLAdapter):
     #                 break
     #         return result
 
-    def list_relations_without_caching(
-        self, schema_relation: HiveRelation
-    ) -> List[HiveRelation]:
+    def list_relations_without_caching(self, schema_relation: HiveRelation) -> List[HiveRelation]:
         """Get a list of Relation(table or view) by SQL directly
         Use different SQL statement for view/table
         """
         kwargs = {"schema": schema_relation}
         try:
-            result_tables = self.execute_macro(
-                "hive__list_tables_without_caching", kwargs=kwargs
-            )
-            result_views = self.execute_macro(
-                "hive__list_views_without_caching", kwargs=kwargs
-            )
+            result_tables = self.execute_macro("hive__list_tables_without_caching", kwargs=kwargs)
+            result_views = self.execute_macro("hive__list_views_without_caching", kwargs=kwargs)
         except dbt.exceptions.RuntimeException as e:
             errmsg = getattr(e, "msg", "")
             if f"Database '{schema_relation}' not found" in errmsg:
@@ -174,12 +165,7 @@ class HiveAdapter(SQLAdapter):
         for row in result_tables:
             # check if this table is view
             is_view = (
-                len(
-                    list(
-                        filter(lambda x: x["tab_name"] == row["tab_name"], result_views)
-                    )
-                )
-                == 1
+                len(list(filter(lambda x: x["tab_name"] == row["tab_name"], result_views))) == 1
             )
             if not is_view:
                 result_tables_without_view.append(row)
@@ -204,9 +190,7 @@ class HiveAdapter(SQLAdapter):
 
         return relations
 
-    def get_relation(
-        self, database: str, schema: str, identifier: str
-    ) -> Optional[BaseRelation]:
+    def get_relation(self, database: str, schema: str, identifier: str) -> Optional[BaseRelation]:
         """Get a Relation for own list"""
         if not self.Relation.include_policy.database:
             database = None
@@ -284,9 +268,7 @@ class HiveAdapter(SQLAdapter):
 
         return columns
 
-    def _get_columns_for_catalog(
-        self, relation: HiveRelation
-    ) -> Iterable[Dict[str, Any]]:
+    def _get_columns_for_catalog(self, relation: HiveRelation) -> Iterable[Dict[str, Any]]:
         """Get columns for catalog. Used by get_one_catalog"""
         # columns = self.parse_columns_from_information(relation)
         columns = self.get_columns_in_relation(relation)
@@ -311,8 +293,7 @@ class HiveAdapter(SQLAdapter):
         schema_map = self._get_catalog_schemas(manifest)
         if len(schema_map) > 1:
             dbt.exceptions.raise_compiler_error(
-                f"Expected only one database in get_catalog, found "
-                f"{list(schema_map)}"
+                f"Expected only one database in get_catalog, found " f"{list(schema_map)}"
             )
 
         # run heavy job in other threads
@@ -361,8 +342,7 @@ class HiveAdapter(SQLAdapter):
         """
         if len(schemas) != 1:
             dbt.exceptions.raise_compiler_error(
-                f"Expected only one schema in Hive _get_one_catalog, found "
-                f"{schemas}"
+                f"Expected only one schema in Hive _get_one_catalog, found " f"{schemas}"
             )
 
         database = information_schema.database
@@ -377,13 +357,11 @@ class HiveAdapter(SQLAdapter):
 
         columns: List[Dict[str, Any]] = []
         for relation in self.list_relations(database, schema):
-            logger.debug("Getting table schema for relation {}".format(relation))
+            logger.debug(f"Getting table schema for relation {relation}")
             columns.extend(self._get_columns_for_catalog(relation))
 
         if len(columns) > 0:
-            text_types = agate_helper.build_type_tester(
-                ["table_owner", "table_database"]
-            )
+            text_types = agate_helper.build_type_tester(["table_owner", "table_database"])
         else:
             text_types = []
 
@@ -393,9 +371,7 @@ class HiveAdapter(SQLAdapter):
         )
 
     def check_schema_exists(self, database, schema):
-        results = self.execute_macro(
-            LIST_SCHEMAS_MACRO_NAME, kwargs={"database": database}
-        )
+        results = self.execute_macro(LIST_SCHEMAS_MACRO_NAME, kwargs={"database": database})
 
         exists = True if schema in [row[0] for row in results] else False
         return exists
@@ -422,9 +398,7 @@ class HiveAdapter(SQLAdapter):
             }
             tracker.track_usage(payload)
         except Exception as ex:
-            logger.debug(
-                f"Failed to fetch permissions for user: {username}. Exception: {ex}"
-            )
+            logger.debug(f"Failed to fetch permissions for user: {username}. Exception: {ex}")
             self.connections.get_thread_connection().handle.close()
 
         self.connections.get_thread_connection().handle.close()
@@ -449,8 +423,8 @@ class HiveAdapter(SQLAdapter):
         for row in grants_table:
             grantee = row["grantor"]
             privilege = row["privilege"]
-            
-            # skip unsupported privileges 
+
+            # skip unsupported privileges
             if privilege in unsupported_privileges:
                 continue
 
@@ -476,9 +450,9 @@ class HiveAdapter(SQLAdapter):
         names: List[str]
         if column_names is None:
             columns = self.get_columns_in_relation(relation_a)
-            names = sorted((self.quote(c.name) for c in columns))
+            names = sorted(self.quote(c.name) for c in columns)
         else:
-            names = sorted((self.quote(n) for n in column_names))
+            names = sorted(self.quote(n) for n in column_names)
         columns_csv = ", ".join(names)
 
         sql = COLUMNS_EQUAL_SQL.format(

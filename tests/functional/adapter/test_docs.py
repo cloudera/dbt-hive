@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
 import pytest
 
 from datetime import datetime
 from dbt.tests.util import AnyInteger
-from dbt.tests.adapter.basic.test_docs_generate import BaseDocsGenerate, BaseDocsGenReferences, verify_catalog
+from dbt.tests.adapter.basic.test_docs_generate import (
+    BaseDocsGenerate,
+    BaseDocsGenReferences,
+    verify_catalog,
+)
 
 from dbt.tests.util import run_dbt, rm_file
+
 
 def no_stats():
     return {
@@ -31,6 +35,7 @@ def no_stats():
             "include": False,
         },
     }
+
 
 def base_expected_catalog(
     project,
@@ -45,7 +50,6 @@ def base_expected_catalog(
     case=None,
     case_columns=False,
 ):
-
     if case is None:
 
         def case(x):
@@ -152,6 +156,7 @@ def base_expected_catalog(
         },
     }
 
+
 class TestBaseDocsHive(BaseDocsGenerate):
     @pytest.fixture(scope="class")
     def expected_catalog(self, project, profile_user):
@@ -164,8 +169,9 @@ class TestBaseDocsHive(BaseDocsGenerate):
             view_type="view",
             table_type="table",
             model_stats=no_stats(),
-            seed_stats=no_stats()
+            seed_stats=no_stats(),
         )
+
 
 def expected_references_catalog(
     project,
@@ -290,6 +296,7 @@ def expected_references_catalog(
             },
         },
     }
+
 
 ref_models__schema_yml = """
 version: 2
@@ -417,8 +424,9 @@ A description of the complex exposure
 
 """
 
+
 def run_and_generate(project, args=None):
-    results = run_dbt(["run"])
+    run_dbt(["run"])
     rm_file(project.project_root, "target", "manifest.json")
     rm_file(project.project_root, "target", "run_results.json")
 
@@ -429,6 +437,7 @@ def run_and_generate(project, args=None):
     catalog = run_dbt(run_args)
     assert catalog
     return start_time
+
 
 class TestBaseDocsGenRefsHive(BaseDocsGenReferences):
     @pytest.fixture(scope="class")
@@ -454,7 +463,7 @@ class TestBaseDocsGenRefsHive(BaseDocsGenReferences):
             table_type="table",
             model_stats=no_stats(),
             seed_stats=no_stats(),
-            bigint_type="bigint"
+            bigint_type="bigint",
         )
 
     def test_references(self, project, expected_catalog):

@@ -1,10 +1,12 @@
 import pytest
 from dbt.tests.adapter.utils.data_types.test_type_bigint import BaseTypeBigInt
 from dbt.tests.adapter.utils.data_types.test_type_float import (
-    BaseTypeFloat, seeds__expected_csv as seeds__float_expected_csv
+    BaseTypeFloat,
+    seeds__expected_csv as seeds__float_expected_csv,
 )
 from dbt.tests.adapter.utils.data_types.test_type_int import (
-    BaseTypeInt, seeds__expected_csv as seeds__int_expected_csv
+    BaseTypeInt,
+    seeds__expected_csv as seeds__int_expected_csv,
 )
 from dbt.tests.adapter.utils.data_types.test_type_numeric import BaseTypeNumeric
 from dbt.tests.adapter.utils.data_types.test_type_string import BaseTypeString
@@ -26,6 +28,7 @@ seeds:
         float_col: float
 """
 
+
 class TestTypeFloat(BaseTypeFloat):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -45,6 +48,7 @@ seeds:
         int_col: int
 """
 
+
 class TestTypeInt(BaseTypeInt):
     @pytest.fixture(scope="class")
     def seeds(self):
@@ -53,7 +57,7 @@ class TestTypeInt(BaseTypeInt):
             "expected.yml": seeds__int_expected_yml,
         }
 
-    
+
 seeds__expected_csv = """numeric_col
 1.2345
 """.lstrip()
@@ -72,6 +76,7 @@ models__actual_sql = """
 select cast('1.2345' as double) as numeric_col
 """
 
+
 class TestTypeNumeric(BaseTypeNumeric):
     def numeric_fixture_type(self):
         return "double"
@@ -87,11 +92,10 @@ class TestTypeNumeric(BaseTypeNumeric):
     def models(self):
         return {"actual.sql": self.interpolate_macro_namespace(models__actual_sql, "type_numeric")}
 
-    
+
 class TestTypeString(BaseTypeString):
     pass
 
-    
+
 class TestTypeTimestamp(BaseTypeTimestamp):
     pass
-

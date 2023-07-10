@@ -4,37 +4,46 @@ from dbt.tests.adapter.basic.test_base import BaseSimpleMaterializations
 from dbt.tests.adapter.basic.test_singular_tests import BaseSingularTests
 from dbt.tests.adapter.basic.test_empty import BaseEmpty
 from dbt.tests.adapter.basic.test_ephemeral import BaseEphemeral
-from dbt.tests.adapter.basic.test_incremental import BaseIncremental, BaseIncrementalNotSchemaChange
+from dbt.tests.adapter.basic.test_incremental import (
+    BaseIncremental,
+    BaseIncrementalNotSchemaChange,
+)
 from dbt.tests.adapter.basic.test_generic_tests import BaseGenericTests
 from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
 from dbt.tests.adapter.utils.base_utils import BaseUtils
 
+
 class TestSimpleMaterializationsHive(BaseSimpleMaterializations):
-   pass
+    pass
 
 
 class TestSingularTestsHive(BaseSingularTests):
-   pass
+    pass
 
 
 class TestEmptyHive(BaseEmpty):
-   pass
+    pass
+
 
 class TestEphemeralHive(BaseEphemeral):
-   pass
+    pass
+
 
 class TestIncrementalHive(BaseIncremental):
-   pass
+    pass
 
 
 class TestGenericTestsHive(BaseGenericTests):
-   pass
+    pass
+
 
 class TestBaseAdapterMethod(BaseAdapterMethod):
     pass
-        
+
+
 class TestBaseUtilsHive(BaseUtils):
-     pass
+    pass
+
 
 incremental_not_schema_change_sql = """
 {{ config(materialized="incremental", incremental_strategy="append") }}
@@ -46,6 +55,7 @@ select
         'okthisis20characters' as platform
     {% endif %}
 """
+
 
 class TestBaseIncrementalNotSchemaChange(BaseIncrementalNotSchemaChange):
     @pytest.fixture(scope="class")

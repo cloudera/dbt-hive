@@ -39,7 +39,7 @@
     Invalid incremental strategy provided: {{ raw_strategy }}
     Expected one of: 'append', 'merge', 'insert_overwrite'
   {%- endset %}
-  
+
   {% set invalid_insert_overwrite_endpoint_msg -%}
     Invalid incremental strategy provided: {{ raw_strategy }}
     You cannot use this strategy when connecting via endpoint

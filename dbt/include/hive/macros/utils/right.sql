@@ -24,5 +24,5 @@
         length({{ string_text }})-1
     )
     end
-    
+
 {%- endmacro -%}

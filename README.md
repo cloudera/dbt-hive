@@ -58,4 +58,3 @@ demo_project:
 |Documentation|Yes|
 |Authentication: LDAP|Yes|
 |Authentication: Kerberos|Yes|
-

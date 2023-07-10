@@ -164,7 +164,7 @@
   {%- set target_relation = adapter.get_relation(
       database=relation.database,
       schema=relation.schema,
-      identifier=relation.name) 
+      identifier=relation.name)
   -%}
   {%- set table_exists=target_relation is not none -%}
 
@@ -231,7 +231,7 @@
       {% set comment = column_dict[column_name]['description'] %}
       {% set escaped_comment = comment | replace('\'', '\\\'') %}
       {% set comment_query %}
-        alter table {{ relation }} change column 
+        alter table {{ relation }} change column
             {{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }}
             comment '{{ escaped_comment }}';
       {% endset %}
@@ -266,7 +266,7 @@
         {{ log("get_hive_version " ~ version_text) }}
         {% do return(version_text.split(".")[0]) %}
      {% else %}
-        {% do return('2') %}  {# assume hive 2 by default #}    
+        {% do return('2') %}  {# assume hive 2 by default #}
      {% endif %}
   {% else %}
     {% do return('2') %}  {# assume hive 2 by default #}

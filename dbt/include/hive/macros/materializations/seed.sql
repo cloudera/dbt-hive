@@ -17,7 +17,7 @@
 {% macro hive__load_csv_rows(model, agate_table) %}
     {% set batch_size = 1000 %}
     {% set column_override = model['config'].get('column_types', {}) %}
-    
+
     {% set statements = [] %}
 
     {% for chunk in agate_table.rows | batch(batch_size) %}

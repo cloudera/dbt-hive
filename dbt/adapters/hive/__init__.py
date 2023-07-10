@@ -22,6 +22,5 @@ from dbt.include import hive
 
 
 Plugin = AdapterPlugin(
-    adapter=HiveAdapter,
-    credentials=HiveCredentials,
-    include_path=hive.PACKAGE_PATH)
+    adapter=HiveAdapter, credentials=HiveCredentials, include_path=hive.PACKAGE_PATH
+)
