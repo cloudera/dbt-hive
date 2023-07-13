@@ -30,7 +30,7 @@ dev_setup: $(VENV)/bin/activate	 ## Install all dependencies and setup pre-commi
 	$(VENV)/bin/pre-commit install
 
 functional_test:	## Run functional tests.
-	$(VENV)/bin/python3 -m pytest --profile $(PROFILE) $(TESTS)
+	$(VENV)/bin/python3 -m pytest --profile $(PROFILE) $(TESTS) $(FLAGS)
 
 test:  ## Run all tests.
 	@make functional_test
