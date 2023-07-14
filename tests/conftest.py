@@ -45,7 +45,8 @@ def cdh_target():
         "schema": os.getenv("DBT_HIVE_SCHEMA") or "dbt_adapter_test",
         "host": os.getenv("DBT_HIVE_HOST"),
         "port": int(os.getenv("DBT_HIVE_PORT")),
-        "auth_type": "insecure",
+        "user": os.getenv("DBT_HIVE_USER"),
+        "password": os.getenv("DBT_HIVE_PASSWORD"),
         "use_http_transport": False,
     }
 
@@ -71,7 +72,7 @@ def local_target():
         "type": "hive",
         "threads": 1,
         "host": "localhost",
-        "port": 21050,
+        "port": 10000,
         "auth_type": "insecure",
         "use_http_transport": False,
         "use_ssl": False,
