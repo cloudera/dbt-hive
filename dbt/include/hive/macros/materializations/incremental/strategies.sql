@@ -25,13 +25,13 @@
 {% endmacro %}
 
 
-{% macro get_insert_into_sql(source_relation, target_relation) %}
-
-    {%- set dest_columns = adapter.get_columns_in_relation(target_relation) -%}
+{% macro get_insert_into_sql(source_relation, target_relation, dest_columns) %}
     {%- set dest_cols_csv = dest_columns | map(attribute='quoted') | join(', ') -%}
-    insert into table {{ target_relation }}
-    select {{dest_cols_csv}} from {{ source_relation.include(database=false, schema=true) }}
-
+    insert into {{ target_relation }} ({{ dest_cols_csv }})
+    (
+        select {{ dest_cols_csv }}
+        from {{ source_relation }}
+    )
 {% endmacro %}
 
 
@@ -101,10 +101,10 @@
 {% endmacro %}
 
 
-{% macro dbt_hive_get_incremental_sql(strategy, source, target, unique_key) %}
+{% macro dbt_hive_get_incremental_sql(strategy, source, target, unique_key, dest_columns) %}
   {%- if strategy == 'append' -%}
     {#-- insert new records into existing table, without updating or overwriting #}
-    {{ get_insert_into_sql(source, target) }}
+    {{ get_insert_into_sql(source, target, dest_columns) }}
   {%- elif strategy == 'insert_overwrite' -%}
     {#-- insert statements don't like CTEs, so support them via a temp view #}
     {{ get_insert_overwrite_sql(source, target) }}
@@ -123,5 +123,5 @@
 
 {% macro hive__get_incremental_default_sql(arg_dict) %}
   {#-- default mode is append, so return the sql for the same  #}
-  {% do return(get_insert_into_sql(arg_dict["source_relation"], arg_dict["target_relation"])) %}
+  {% do return(get_insert_into_sql(arg_dict["source_relation"], arg_dict["target_relation"], arg_dict["dest_columns"])) %}
 {% endmacro %}
