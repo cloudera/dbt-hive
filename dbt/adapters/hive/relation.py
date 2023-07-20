@@ -36,6 +36,7 @@ class HiveIncludePolicy(Policy):
 
 @dataclass(frozen=True, eq=False, repr=False)
 class HiveRelation(BaseRelation):
+    print("wasup")
     quote_policy: HiveQuotePolicy = field(default_factory=lambda: HiveQuotePolicy())
     include_policy: HiveIncludePolicy = field(default_factory=lambda: HiveIncludePolicy())
     quote_character: str = "`"
