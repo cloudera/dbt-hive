@@ -161,19 +161,10 @@
 
 {# use describe extended for more information #}
 {% macro hive__get_columns_in_relation(relation) -%}
-  {%- set target_relation = adapter.get_relation(
-      database=relation.database,
-      schema=relation.schema,
-      identifier=relation.name)
-  -%}
-  {%- set table_exists=target_relation is not none -%}
-
-  {%- if table_exists %}
   {% call statement('get_columns_in_relation', fetch_result=True) %}
     describe formatted {{ relation }}
   {% endcall %}
   {% do return(load_result('get_columns_in_relation').table) %}
-  {%- endif -%}
 {% endmacro %}
 
 {% macro hive__list_relations_without_caching(relation) %}
@@ -270,5 +261,35 @@
      {% endif %}
   {% else %}
     {% do return('2') %}  {# assume hive 2 by default #}
+  {% endif %}
+{% endmacro %}
+
+{% macro alter_relation_add_columns(relation, add_columns) %}
+  {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
+  {{ print("vamshi is here again") }}
+  {{ print(add_columns) }}
+  {% if add_columns %}
+    {% set sql -%}
+       alter {{ relation.type }} {{ relation }} add columns (
+          {% for column in add_columns %}
+            {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last }}
+          {% endfor %}
+        )
+    {%- endset -%}
+    {% do run_query(sql) %}
+  {% endif %}
+{% endmacro %}
+
+{% macro alter_relation_replace_columns(relation, new_columns) %}
+  {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
+  {% if new_columns %}
+    {% set sql -%}
+       alter {{ relation.type }} {{ relation }} replace columns (
+          {% for column in new_columns %}
+            {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last }}
+          {% endfor %}
+        )
+    {%- endset -%}
+    {% do run_query(sql) %}
   {% endif %}
 {% endmacro %}
