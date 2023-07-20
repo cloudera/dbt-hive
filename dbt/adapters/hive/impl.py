@@ -132,7 +132,7 @@ class HiveAdapter(SQLAdapter):
         try:
             result_tables = self.execute_macro("hive__list_tables_without_caching", kwargs=kwargs)
             result_views = self.execute_macro("hive__list_views_without_caching", kwargs=kwargs)
-        except dbt.exceptions.RuntimeException as e:
+        except dbt.exceptions.DbtRuntimeError as e:
             errmsg = getattr(e, "msg", "")
             if f"Database '{schema_relation}' not found" in errmsg:
                 return []
