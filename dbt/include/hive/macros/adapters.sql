@@ -266,8 +266,6 @@
 
 {% macro alter_relation_add_columns(relation, add_columns) %}
   {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
-  {{ print("vamshi is here again") }}
-  {{ print(add_columns) }}
   {% if add_columns %}
     {% set sql -%}
        alter {{ relation.type }} {{ relation }} add columns (
