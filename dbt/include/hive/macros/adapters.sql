@@ -112,11 +112,16 @@
   {%- endif -%}
 {%- endmacro -%}
 
+{% macro stored_by_clause(table_type) %}
+  {%- if table_type is not none %}
+    stored by {{ table_type }}
+  {%- endif %}
+{%- endmacro -%}
 
 {% macro hive__create_table_as(temporary, relation, sql) -%}
   {%- set _properties = config.get('properties') -%}
   {%- set is_external = config.get('external') -%}
-  {%- set is_iceberg = config.get('is_iceberg') -%}
+  {%- set table_type = config.get('table_type') -%}
 
   {% if temporary -%}
     {{ create_temporary_view(relation, sql) }}
@@ -127,9 +132,13 @@
       create {% if is_external == true -%}external{%- endif %} table {{ relation }}
     {% endif %}
     {{ options_clause() }}
-    {{ partition_cols(label="partitioned by") }}
+    {% if table_type == 'iceberg' -%}
+      {{ partition_cols(label="partitioned by spec") }}
+    {% else %}
+      {{ partition_cols(label="partitioned by") }}
+    {%- endif %}
     {{ clustered_cols(label="clustered by") }}
-    {% if is_iceberg == true -%} STORED BY ICEBERG {%- endif %}
+    {{ stored_by_clause(table_type) }}
     {{ file_format_clause() }}
     {{ location_clause() }}
     {{ comment_clause() }}
