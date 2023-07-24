@@ -264,30 +264,60 @@
   {% endif %}
 {% endmacro %}
 
-{% macro alter_relation_add_columns(relation, add_columns) %}
+{% macro alter_relation_add_columns(relation, add_columns = none) -%}
   {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
-  {% if add_columns %}
-    {% set sql -%}
-       alter {{ relation.type }} {{ relation }} add columns (
-          {% for column in add_columns %}
-            {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last }}
-          {% endfor %}
-        )
-    {%- endset -%}
-    {% do run_query(sql) %}
+
+  {% if add_columns is none %}
+    {% set add_columns = [] %}
+  {% endif %}
+
+  {% set sql -%}
+    alter {{ relation.type }} {{ relation }}
+      add columns (
+        {%- for column in add_columns -%}
+          {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last else ';' }}
+        {%- endfor -%}
+      )
+  {%- endset -%}
+
+  {% if (add_columns | length) > 0 %}
+    {{ return(run_query(sql)) }}
   {% endif %}
 {% endmacro %}
 
-{% macro alter_relation_replace_columns(relation, new_columns) %}
+{% macro alter_relation_drop_columns(relation, remove_columns = none) -%}
   {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
-  {% if new_columns %}
+
+  {% if remove_columns is none %}
+    {% set remove_columns = [] %}
+  {% endif %}
+
+  {%- for column in remove_columns -%}
     {% set sql -%}
-       alter {{ relation.type }} {{ relation }} replace columns (
-          {% for column in new_columns %}
-            {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last }}
-          {% endfor %}
-        )
-    {%- endset -%}
+      alter {{ relation.type }} {{ relation }} drop column {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+    {% endset %}
     {% do run_query(sql) %}
+  {%- endfor -%}
+{% endmacro %}
+
+{% macro alter_relation_replace_columns(relation, replace_columns = none) -%}
+  {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
+  {% if replace_columns is none %}
+    {% set replace_columns = [] %}
+  {% endif %}
+
+  {% set sql -%}
+      alter {{ relation.type }} {{ relation }}
+          replace columns (
+            {%- for column in replace_columns -%}
+                 {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+                 {{ column.data_type }}
+                 {{ ', ' if not loop.last }}
+            {%- endfor -%}
+          )
+  {%- endset -%}
+
+  {% if (replace_columns | length) > 0 %}
+    {{ return(run_query(sql)) }}
   {% endif %}
 {% endmacro %}
