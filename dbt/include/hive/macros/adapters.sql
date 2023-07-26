@@ -284,9 +284,9 @@
     alter {{ relation.type }} {{ relation }}
       add columns (
         {%- for column in add_columns -%}
-          {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last else ';' }}
+          {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last }}
         {%- endfor -%}
-      )
+      );
   {%- endset -%}
 
   {% if (add_columns | length) > 0 %}
@@ -294,19 +294,24 @@
   {% endif %}
 {% endmacro %}
 
-{% macro alter_relation_drop_columns(relation, remove_columns = none) -%}
+{% macro alter_relation_change_columns(relation, change_columns = none) -%}
   {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
-
-  {% if remove_columns is none %}
-    {% set remove_columns = [] %}
+  {% if change_columns is none %}
+    {% set change_columns = [] %}
   {% endif %}
 
-  {%- for column in remove_columns -%}
-    {% set sql -%}
-      alter {{ relation.type }} {{ relation }} drop column {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
-    {% endset %}
-    {% do run_query(sql) %}
-  {%- endfor -%}
+  {% set sql -%}
+    {%- for column in change_columns -%}
+      alter {{ relation.type }} {{ relation }}
+        change {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+          {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+          {{ column.data_type }}
+    {%- endfor -%}
+  {%- endset -%}
+
+  {% if (change_columns | length) > 0 %}
+    {{ return(run_query(sql)) }}
+  {% endif %}
 {% endmacro %}
 
 {% macro alter_relation_replace_columns(relation, replace_columns = none) -%}
@@ -319,9 +324,9 @@
       alter {{ relation.type }} {{ relation }}
           replace columns (
             {%- for column in replace_columns -%}
-                 {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
-                 {{ column.data_type }}
-                 {{ ', ' if not loop.last }}
+              {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+              {{ column.data_type }}
+              {{ ', ' if not loop.last }}
             {%- endfor -%}
           )
   {%- endset -%}
