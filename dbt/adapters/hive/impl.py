@@ -207,22 +207,54 @@ class HiveAdapter(SQLAdapter):
             pos += 1
         return pos
 
+    @staticmethod
+    def parse_columns_info(raw_rows, start, end):
+        # remove comments columns
+        valid_rows = [
+            (row)
+            for row in raw_rows[start:end]
+            if not row["col_name"].startswith("#") and not row["col_name"] == ""
+        ]
+
+        # avoid overridding duplicate columns by partition columns
+        unique_rows = []
+        for row in valid_rows:
+            curr_unique_keys = list({row["col_name"]: row for row in unique_rows})
+            if row["col_name"] not in curr_unique_keys:
+                unique_rows.append(row)
+        return unique_rows
+
     def parse_describe_formatted(
         self, relation: Relation, raw_rows: List[agate.Row]
     ) -> List[HiveColumn]:
         # Convert the Row to a dict
         dict_rows = [dict(zip(row._keys, row._values)) for row in raw_rows]
-        # Find the separator between the rows and the metadata provided
-        # by the DESCRIBE TABLE FORMATTED statement
-        pos = self.find_table_information_separator(dict_rows)
+        # Find the separator between columns and partitions information
+        # by the DESCRIBE EXTENDED {{relation}} statement
+        partition_separator_pos = self.find_partition_information_separator(dict_rows)
 
-        # Remove rows that start with a hash, they are comments
-        rows = [
-            row
-            for row in raw_rows[0:pos]
-            if row["col_name"] and not row["col_name"].startswith("#")
-        ]
-        metadata = {col["col_name"]: col["data_type"] for col in raw_rows[pos + 1 :]}
+        # Find the separator between the rows and the metadata provided
+        # by the DESCRIBE EXTENDED {{relation}} statement
+        table_separator_pos = self.find_table_information_separator(dict_rows)
+
+        column_separator_pos = (
+            partition_separator_pos if partition_separator_pos > 0 else table_separator_pos
+        )
+        logger.debug(
+            f"relation={relation}, "
+            f"partition_separator_pos = {partition_separator_pos}, "
+            f"table_separator_pos = {table_separator_pos}, "
+            f"column_separator_pos = {column_separator_pos}"
+        )
+
+        # fetch columns info
+        rows = self.parse_columns_info(raw_rows, 0, table_separator_pos)
+
+        metadata = {
+            col["col_name"].split(":")[0].strip(): col["data_type"].strip()
+            for col in raw_rows[table_separator_pos + 1 :]
+            if col["col_name"] and not col["col_name"].startswith("#") and col["data_type"]
+        }
 
         # raw_table_stats = metadata.get(KEY_TABLE_STATISTICS)
         # table_stats = HiveColumn.convert_table_stats(raw_table_stats)
@@ -247,6 +279,20 @@ class HiveAdapter(SQLAdapter):
             )
             for idx, column in enumerate(rows)
         ]
+
+    @staticmethod
+    def find_partition_information_separator(rows: List[dict]) -> int:
+        pos = 0
+        ps_keys = [
+            "# Partition Information",  # non-iceberg
+            "# Partition Transform Information",  # iceberg
+        ]
+        for row in rows:
+            if row["col_name"] and row["col_name"].startswith(tuple(ps_keys)):
+                break
+            pos += 1
+        result = 0 if (pos == len(rows)) else pos
+        return result
 
     @staticmethod
     def find_table_information_separator(rows: List[dict]) -> int:
