@@ -265,10 +265,6 @@ class HiveAdapter(SQLAdapter):
             new_metadata[k.strip()] = metadata[k].strip() if metadata[k] else ""
         metadata = new_metadata
 
-        # logger.debug(f'metadata = {pformat(metadata)}')
-        # logger.debug(f'rows = {pformat(rows)}')
-        # logger.debug(f'dict_rows = {pformat(dict_rows)}')
-
         return [
             HiveColumn(
                 table_database=None,
