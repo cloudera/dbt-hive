@@ -94,7 +94,7 @@
     {% endif %}
 
     {#-- Get the incremental_strategy, the macro to use for the strategy, and build the sql --#}
-    {% set build_sql = dbt_hive_get_incremental_sql(incremental_strategy, temp_relation, target_relation, unique_key) %}}
+    {% set build_sql = dbt_hive_get_incremental_sql(incremental_strategy, temp_relation, target_relation, unique_key, dest_columns) %}}
 
   {% endif %}
 
