@@ -14,7 +14,6 @@
 from collections import OrderedDict
 from concurrent.futures import Future
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Optional, List, Dict, Any, Union, Iterable
 import agate
 
@@ -100,11 +99,6 @@ class HiveAdapter(SQLAdapter):
 
     def quote(self, identifier):
         return f"`{identifier}`"
-
-    def get_delete_column_name(self, column: str) -> str:
-        curr_dt = datetime.now()
-        timestamp = int(round(curr_dt.timestamp()))
-        return f"__{column}_{timestamp}"
 
     def add_schema_to_cache(self, schema) -> str:
         """Cache a new schema in dbt. It will show up in `list relations`."""
