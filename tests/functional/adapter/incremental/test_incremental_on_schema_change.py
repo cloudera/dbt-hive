@@ -1,3 +1,5 @@
+from dbt.tests.util import run_dbt
+
 from dbt.tests.adapter.incremental.test_incremental_on_schema_change import (
     BaseIncrementalOnSchemaChange,
     BaseIncrementalOnSchemaChangeSetup,

@@ -1,10 +1,7 @@
 import pytest
 import re
 
-from dbt.tests.util import (
-    check_relations_equal,
-    run_dbt,
-)
+from dbt.tests.util import run_dbt
 
 from dbt.tests.adapter.incremental.fixtures import (
     _MODELS__INCREMENTAL_SYNC_REMOVE_ONLY,
