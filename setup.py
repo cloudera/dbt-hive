@@ -77,6 +77,7 @@ setup(
         "impyla==0.18",
         "sqlparams>=3.0.0",
         "python-decouple>=3.6",
-        "kerberos>=1.3.0",
+        "kerberos>=1.3.0; platform_system == 'Darwin' or platform_system == 'Linux' ",
+        "winkerberos>=0.9.1; platform_system == 'Windows' ",
     ],
 )
