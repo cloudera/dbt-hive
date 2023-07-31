@@ -216,6 +216,16 @@ class HiveConnectionManager(SQLConnectionManager):
                 or credentials.auth_type.upper() == "KERBEROS"
             ):  # kerberos based connection
                 auth_type = "kerberos"
+                print("Kerberos connection parameters: ")
+                print("impala.dbapi.connect(host={},port={},auth_mechanism={},kerberos_service_name={},use_http_transport={},use_ssl={},http_path={})", 
+                    credentials.host,
+                    credentials.port,
+                    "GSSAPI",
+                    credentials.kerberos_service_name,
+                    credentials.use_http_transport,
+                    credentials.use_ssl,
+                    credentials.http_path
+                )
                 hive_conn = impala.dbapi.connect(
                     host=credentials.host,
                     port=credentials.port,
@@ -223,6 +233,7 @@ class HiveConnectionManager(SQLConnectionManager):
                     kerberos_service_name=credentials.kerberos_service_name,
                     use_http_transport=credentials.use_http_transport,
                     use_ssl=credentials.use_ssl,
+                    http_path=credentials.http_path,
                 )
             else:
                 raise dbt.exceptions.DbtProfileError(
