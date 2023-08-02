@@ -34,15 +34,16 @@
     )
 {% endmacro %}
 
+{% macro get_qualified_columnnames_csv(columns, qualifier='') %}
 
-{% macro get_update_csv(column_names, qualifier='') %}
-
+    {{print('get_qualified_column_csv')}}
+    {{print(column_names)}}
     {% set quoted = [] %}
-    {% for col in column_names -%}
+    {% for col in columns -%}
         {% if qualifier != '' %}
-          {%- do quoted.append(qualifier+'.'+col) -%}
+          {%- do quoted.append(qualifier + '.' + col.name) -%}
         {% else %}
-          {%- do quoted.append(col) -%}
+          {%- do quoted.append(col.name) -%}
         {% endif %}
     {%- endfor %}
 
@@ -53,10 +54,9 @@
 
 {% macro hive__get_merge_sql(target, source, unique_key, dest_columns, predicates=none) %}
   {%- set predicates = [] if predicates is none else [] + predicates -%}
-  {%- set update_columns = config.get("merge_update_columns") -%}
-  {%- set insert_columns = config.get("merge_insert_columns") -%}
-  {%- set update_cols_csv = get_update_csv(update_columns, 'DBT_INTERNAL_SOURCE') -%}
-  {%- set insert_cols_csv = get_update_csv(insert_columns, 'DBT_INTERNAL_SOURCE') -%}
+  {%- set merge_update_columns = config.get('merge_update_columns') -%}
+  {%- set merge_exclude_columns = config.get('merge_exclude_columns') -%}
+  {%- set update_columns = get_merge_update_columns(merge_update_columns, merge_exclude_columns, dest_columns) -%}
 
   {% if unique_key %}
       {% if unique_key is sequence and unique_key is not mapping and unique_key is not string %}
@@ -76,28 +76,23 @@
       {% do predicates.append('FALSE') %}
   {% endif %}
 
-    merge into {{ target }} as DBT_INTERNAL_DEST
-      using {{ source.include(schema=true) }} as DBT_INTERNAL_SOURCE
-      on {{ predicates | join(' and ') }}
+  merge into {{ target }} as DBT_INTERNAL_DEST
+    using {{ source }} as DBT_INTERNAL_SOURCE
+    on {{"(" ~ predicates | join(") and (") ~ ")"}}
 
-      when matched then update set
-        {% if update_columns -%}{%- for column_name in update_columns %}
-            {{ column_name }} = DBT_INTERNAL_SOURCE.{{ column_name }}
-            {%- if not loop.last %}, {%- endif %}
-        {%- endfor %}
-        {%- else %} * {% endif %}
+  {% if unique_key %}
+    when matched then update set
+      {% for column_name in update_columns -%}
+          {{ column_name }} = DBT_INTERNAL_SOURCE.{{ column_name }}
+          {%- if not loop.last %}, {%- endif %}
+      {%- endfor %}
+  {% endif %}
 
-      {% if insert_columns %}
-          when not matched then insert
-            ({{get_update_csv(insert_columns)}})
-          values
-            ({{insert_cols_csv}})
-      {%- else %}
-          when not matched then insert
-            ({{get_update_csv(update_columns)}})
-          values
-            ({{update_cols_csv}})
-      {%- endif %}
+  when not matched then insert
+    ({{ get_qualified_columnnames_csv(dest_columns) }})
+  values
+    ({{ get_qualified_columnnames_csv(dest_columns, 'DBT_INTERNAL_SOURCE') }})
+
 {% endmacro %}
 
 
@@ -110,7 +105,7 @@
     {{ get_insert_overwrite_sql(source, target) }}
   {%- elif strategy == 'merge' -%}
   {#-- merge all columns with databricks delta - schema changes are handled for us #}
-    {{ get_merge_sql(target, source, unique_key, dest_columns=none, predicates=none) }}
+    {{ get_merge_sql(target, source, unique_key, dest_columns, predicates=none) }}
   {%- else -%}
     {% set no_sql_for_strategy_msg -%}
       No known SQL for the incremental strategy provided: {{ strategy }}
