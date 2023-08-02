@@ -78,7 +78,7 @@ class HiveCredentials(Credentials):
     def __post_init__(self):
         # hive classifies database and schema as the same thing
         if self.database is not None and self.database != self.schema:
-            raise dbt.exceptions.RuntimeException(
+            raise dbt.exceptions.DbtRuntimeError(
                 f"    schema: {self.schema} \n"
                 f"    database: {self.database} \n"
                 f"On Hive, database must be omitted or have the same value as"
@@ -265,12 +265,12 @@ class HiveConnectionManager(SQLConnectionManager):
             yield
         except HttpError as httpError:
             logger.debug(f"Authorization error: {httpError}")
-            raise dbt.exceptions.RuntimeException(
+            raise dbt.exceptions.DbtRuntimeError(
                 "HTTP Authorization error: " + str(httpError) + ", please check your credentials"
             )
         except HiveServer2Error as hiveError:
             logger.debug(f"Server connection error: {hiveError}")
-            raise dbt.exceptions.RuntimeException(
+            raise dbt.exceptions.DbtRuntimeError(
                 "Unable to establish connection to Hive server: " + str(hiveError)
             )
         except Exception as exc:
@@ -278,7 +278,7 @@ class HiveConnectionManager(SQLConnectionManager):
             logger.debug(exc)
             if len(exc.args) == 0:
                 raise
-            raise dbt.exceptions.RuntimeException(str(exc))
+            raise dbt.exceptions.DbtRuntimeError(str(exc))
 
     def cancel(self, connection):
         connection.handle.cancel()
