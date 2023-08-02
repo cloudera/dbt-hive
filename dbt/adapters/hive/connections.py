@@ -61,6 +61,7 @@ class HiveCredentials(Credentials):
     password: Optional[str] = None
     auth_type: Optional[str] = None
     use_ssl: Optional[bool] = True
+    ca_cert: Optional[str] = None
     use_http_transport: Optional[bool] = True
     http_path: Optional[str] = None
     kerberos_service_name: Optional[str] = None
@@ -223,6 +224,7 @@ class HiveConnectionManager(SQLConnectionManager):
                     kerberos_service_name=credentials.kerberos_service_name,
                     use_http_transport=credentials.use_http_transport,
                     use_ssl=credentials.use_ssl,
+                    ca_cert=credentials.ca_cert,
                 )
             else:
                 raise dbt.exceptions.DbtProfileError(
@@ -236,7 +238,7 @@ class HiveConnectionManager(SQLConnectionManager):
 
             HiveConnectionManager.fetch_hive_version(connection.handle)
         except Exception as exc:
-            logger.debug(f"Connection error: {exc}")
+            logger.error(f"Connection error: {exc}")
             connection_ex = exc
             connection.state = ConnectionState.FAIL
             connection.handle = None
