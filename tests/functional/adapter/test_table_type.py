@@ -288,7 +288,6 @@ class TestIncrementalMultiplePartitionIcebergHive(TestIncrementalIcebergHive):
         }
 
 
-@pytest.mark.skip(reason="Not working because insert queries are not working as expected")
 class TestInsertOverwriteIcebergHive(TestIncrementalIcebergHive):
     @pytest.fixture(scope="class")
     def models(self):
