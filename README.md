@@ -11,14 +11,14 @@ The `dbt-hive` adapter allows you to use [dbt](https://www.getdbt.com/) along wi
 ### Credits
 
 The initial adapter code was developed by bachng2017 who agreed to transfer the ownership and continute active development.
-This code base is now being activiely developed and maintained by Innovation Accelerator team in Cloudera.
+This code base is now being activiely developed and maintained by Cloudera.
 
 ### Requirements
 
+Current version of dbt-hive use dbt-core 1.4.*. We are actively working on supporting next version of dbt-core 1.5
+
 Python >= 3.8
-
-dbt-core ~= 1.3.0
-
+dbt-core ~= 1.4.*
 impyla >= 0.18
 
 ### Install
@@ -44,17 +44,45 @@ demo_project:
 ```
 
 ## Supported features
-| Name | Supported |
-|------|-----------|
-|Materialization: Table|Yes|
-|Materialization: View|Yes|
-|Materialization: Incremental - Append|Yes|
-|Materialization: Incremental - Insert+Overwrite|Yes|
-|Materialization: Incremental - Merge|No|
-|Materialization: Ephemeral|No|
-|Seeds|Yes|
-|Tests|Yes|
-|Snapshots|No|
-|Documentation|Yes|
-|Authentication: LDAP|Yes|
-|Authentication: Kerberos|Yes|
+| Name | Supported | Iceberg |
+|------|-----------|---------|
+|Materialization: View | Yes | N/A |
+|Materialization: Table| Yes | Yes |
+|Materialization: Table with Partitions | Yes | Yes |
+|Materialization: Incremental - Append | Yes | Yes|
+|Materialization: Incremental - Append with Partitions | Yes | Yes|
+|Materialization: Incremental - Insert+Overwrite| Yes | Yes |
+|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | Yes |
+|Materialization: Incremental - Merge | No | No |
+|Materialization: Ephemeral | No | No |
+|Seeds | Yes | Yes |
+|Tests | Yes | Yes |
+|Snapshots | No | No |
+|Documentation | Yes | No |
+|Authentication: LDAP | Yes | Yes |
+|Authentication: Kerberos | Yes | Yes |
+
+
+
+### Tests Coverage
+
+#### Functional Tests
+| Name | Base | Iceberg |
+|------|------|---------|
+|Materialization: View | Yes | N/A |
+|Materialization: Table| Yes | Yes |
+|Materialization: Table with Partitions | Yes | Yes |
+|Materialization: Incremental - Append | Yes | Yes|
+|Materialization: Incremental - Append with Partitions | Yes | Yes|
+|Materialization: Incremental - Insert+Overwrite| Yes | Yes |
+|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | Yes |
+|Materialization: Incremental - Merge | No | No |
+|Materialization: Ephemeral | No | No |
+|Seeds | Yes | Yes |
+|Tests | Yes | Yes |
+|Snapshots | No | No |
+|Documentation | Yes | No |
+|Authentication: LDAP | Yes | Yes |
+|Authentication: Kerberos | Yes | Yes |
+
+Note: Kerberos is only qualified on Unix platform.
