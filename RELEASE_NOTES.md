@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0 (Aug 4th, 2023)
+- Support compatibility with dbt-core 1.4.x
+- Added functional testing suite and stabilize the main branch.
+- Added support for Iceberg table type.
+- Added support for Windows platform (using LDAP).
+- Bugfix: Handling edge cases for datediff macros.
+
 ## 1.3.0 (Nov 25th, 2022)
 Now dbt-hive adapter supports dbt-core 1.3.0
 

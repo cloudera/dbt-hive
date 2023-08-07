@@ -270,7 +270,6 @@ class TestIncrementalIcebergHive(BaseIncremental):
         assert len(catalog.sources) == 1
 
 
-@pytest.mark.skip(reason="Not working because increment insert queries are not working")
 class TestIncrementalPartitionIcebergHive(TestIncrementalIcebergHive):
     @pytest.fixture(scope="class")
     def models(self):
@@ -280,7 +279,6 @@ class TestIncrementalPartitionIcebergHive(TestIncrementalIcebergHive):
         }
 
 
-@pytest.mark.skip(reason="Not working because increment insert queries are not working")
 class TestIncrementalMultiplePartitionIcebergHive(TestIncrementalIcebergHive):
     @pytest.fixture(scope="class")
     def models(self):
@@ -290,7 +288,6 @@ class TestIncrementalMultiplePartitionIcebergHive(TestIncrementalIcebergHive):
         }
 
 
-@pytest.mark.skip(reason="Not working because increment insert queries are not working")
 class TestInsertOverwriteIcebergHive(TestIncrementalIcebergHive):
     @pytest.fixture(scope="class")
     def models(self):

@@ -1,3 +1,4 @@
+from distutils.util import strtobool
 import pytest
 import os
 
@@ -29,6 +30,8 @@ def dbt_profile_target(request):
     profile_type = request.config.getoption("--profile")
     if profile_type == "cdh_endpoint":
         target = cdh_target()
+    elif profile_type == "cdh_kerberos_endpoint":
+        target = cdh_kerberos_target()
     elif profile_type == "dwx_endpoint":
         target = dwx_target()
     elif profile_type == "local_endpoint":
@@ -48,6 +51,21 @@ def cdh_target():
         "user": os.getenv("DBT_HIVE_USER"),
         "password": os.getenv("DBT_HIVE_PASSWORD"),
         "use_http_transport": False,
+    }
+
+
+def cdh_kerberos_target():
+    return {
+        "type": "hive",
+        "threads": 4,
+        "auth_type": "kerberos",
+        "host": os.getenv("DBT_HIVE_HOST"),
+        "port": int(os.getenv("DBT_HIVE_PORT")),
+        "schema": os.getenv("DBT_HIVE_SCHEMA") or "dbt_adapter_test",
+        "kerberos_service_name": os.getenv("DBT_HIVE_KERBEROS_SERVICE_NAME") or "hive",
+        "use_http_transport": bool(strtobool(os.getenv("DBT_HIVE_USE_HTTP_TRANSPORT") or "f")),
+        "use_ssl": bool(strtobool(os.getenv("DBT_HIVE_USE_SSL") or "f")),
+        "ca_cert": os.getenv("DBT_CA_CERT") or None,
     }
 
 

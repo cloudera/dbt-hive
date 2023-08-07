@@ -17,9 +17,12 @@
 {% macro get_insert_overwrite_sql(source_relation, target_relation) %}
 
     {%- set dest_columns = adapter.get_columns_in_relation(target_relation) -%}
+    {%- set table_type = config.get('table_type') -%}
     {%- set dest_cols_csv = dest_columns | map(attribute='quoted') | join(', ') -%}
     insert overwrite table {{ target_relation }}
-    {{ partition_cols(label="partition") }}
+    {% if table_type != 'iceberg' -%}
+      {{ partition_cols(label="partition") }}
+    {%- endif %}
     select {{dest_cols_csv}} from {{ source_relation.include(database=false, schema=true) }}
 
 {% endmacro %}
