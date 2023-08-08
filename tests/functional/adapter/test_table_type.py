@@ -54,7 +54,10 @@ iceberg_base_table_sql = (
 {{
   config(
     materialized="table",
-    table_type="iceberg"
+    table_type="iceberg",
+    tbl_properties={
+      "format-version": "2"
+    }
   )
 }}""".strip()
     + model_base
@@ -65,7 +68,10 @@ iceberg_base_materialized_var_sql = (
 {{
   config(
     materialized=var("materialized_var", "table"),
-    table_type="iceberg"
+    table_type="iceberg",
+    tbl_properties={
+      "format-version": "2"
+    }
   )
 }}""".strip()
     + model_base
@@ -76,7 +82,10 @@ incremental_iceberg_sql = (
  {{
     config(
         materialized="incremental",
-        table_type="iceberg"
+        table_type="iceberg",
+        tbl_properties={
+          "format-version": "2"
+        }
     )
 }}
 """.strip()
@@ -89,7 +98,10 @@ incremental_partition_iceberg_sql = """
     config(
         materialized="incremental",
         partition_by="id",
-        table_type="iceberg"
+        table_type="iceberg",
+        tbl_properties={
+          "format-version": "2"
+        }
     )
 }}
 select *, id as id_partition1 from {{ source('raw', 'seed') }}
@@ -103,7 +115,10 @@ incremental_multiple_partition_iceberg_sql = """
     config(
         materialized="incremental",
         partition_by=["id_partition1", "id_partition2"],
-        table_type="iceberg"
+        table_type="iceberg",
+        tbl_properties={
+          "format-version": "2"
+        }
     )
 }}
 select *, id as id_partition1, id as id_partition2 from {{ source('raw', 'seed') }}
@@ -118,7 +133,10 @@ insertoverwrite_iceberg_sql = """
         materialized="incremental",
         incremental_strategy="insert_overwrite",
         partition_by="id_partition1",
-        table_type="iceberg"
+        table_type="iceberg",
+        tbl_properties={
+          "format-version": "2"
+        }
     )
 }}
 select *, id as id_partition1 from {{ source('raw', 'seed') }}
@@ -293,5 +311,27 @@ class TestInsertOverwriteIcebergHive(TestIncrementalIcebergHive):
     def models(self):
         return {
             "incremental_test_model.sql": insertoverwrite_iceberg_sql,
+            "schema.yml": schema_base_yml,
+        }
+
+
+incremental_iceberg_sql_v1 = (
+    """
+ {{
+    config(
+        materialized="incremental",
+        table_type="iceberg"
+    )
+}}
+""".strip()
+    + model_incremental
+)
+
+
+class TestIncrementalIcebergV1Hive(TestIncrementalIcebergHive):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "incremental_test_model.sql": incremental_iceberg_sql_v1,
             "schema.yml": schema_base_yml,
         }

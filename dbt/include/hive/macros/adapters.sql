@@ -119,7 +119,7 @@
 {%- endmacro -%}
 
 {% macro hive__create_table_as(temporary, relation, sql) -%}
-  {%- set _properties = config.get('properties') -%}
+  {%- set _properties = config.get('tbl_properties') -%}
   {%- set is_external = config.get('external') -%}
   {%- set table_type = config.get('table_type') -%}
 
