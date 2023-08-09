@@ -103,10 +103,6 @@ class TestEphemeralHive(BaseEphemeral):
     pass
 
 
-class TestIncrementalHive(BaseIncremental):
-    pass
-
-
 class TestGenericTestsHive(BaseGenericTests):
     pass
 
@@ -119,6 +115,48 @@ class TestBaseUtilsHive(BaseUtils):
     pass
 
 
+class TestIncrementalHive(BaseIncremental):
+    pass
+
+
+incremental_single_partitionby_sql = """
+ {{ config(materialized="incremental", partition_by="id_partition") }}
+ select
+    *, id as id_partition from {{ source('raw', 'seed') }}
+    {% if is_incremental() %}
+        where id > (select max(id) from {{ this }})
+    {% endif %}
+""".strip()
+
+
+class TestIncrementalPartitionHive(BaseIncremental):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "incremental.sql": incremental_single_partitionby_sql,
+            "schema.yml": schema_base_yml,
+        }
+
+
+incremental_multiple_partitionby_sql = """
+ {{ config(materialized="incremental", partition_by=["id_partition1", "id_partition2"]) }}
+ select
+    *, id as id_partition1, id as id_partition2 from {{ source('raw', 'seed') }}
+    {% if is_incremental() %}
+        where id > (select max(id) from {{ this }})
+    {% endif %}
+""".strip()
+
+
+class TestIncrementalMultiplePartitionsHive(BaseIncremental):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {
+            "incremental.sql": incremental_multiple_partitionby_sql,
+            "schema.yml": schema_base_yml,
+        }
+
+
 incremental_not_schema_change_sql = """
 {{ config(materialized="incremental", incremental_strategy="append") }}
 select
@@ -129,6 +167,20 @@ select
         'okthisis20characters' as platform
     {% endif %}
 """
+
+insertoverwrite_sql = """
+{{ config(materialized="incremental", incremental_strategy="insert_overwrite", partition_by="id_partition") }}
+select *, id as id_partition from {{ source('raw', 'seed') }}
+    {% if is_incremental() %}
+        where id > (select max(id) from {{ this }})
+    {% endif %}
+""".strip()
+
+
+class TestInsertOverwriteHive(BaseIncremental):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {"incremental.sql": insertoverwrite_sql, "schema.yml": schema_base_yml}
 
 
 class TestBaseIncrementalNotSchemaChange(BaseIncrementalNotSchemaChange):
