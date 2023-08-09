@@ -38,9 +38,6 @@
 {% endmacro %}
 
 {% macro get_qualified_columnnames_csv(columns, qualifier='') %}
-
-    {{print('get_qualified_column_csv')}}
-    {{print(column_names)}}
     {% set quoted = [] %}
     {% for col in columns -%}
         {% if qualifier != '' %}
