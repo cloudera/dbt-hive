@@ -309,8 +309,21 @@ class HiveAdapter(SQLAdapter):
         parent method is used to call DESCRIBE <tablename> statement
         dtype is used for correct quote
         """
-        rows: List[agate.Row] = super().get_columns_in_relation(relation)
-        columns = self.parse_describe_formatted(relation, rows)
+        try:
+            rows: List[agate.Row] = super().get_columns_in_relation(relation)
+            columns = self.parse_describe_formatted(relation, rows)
+        except dbt.exceptions.DbtRuntimeError as e:
+            # impala would throw error when table doesn't exist
+            errmsg = getattr(e, "msg", "")
+            if (
+                "Table or view not found" in errmsg
+                or "NoSuchTableException" in errmsg
+                or "Could not resolve path" in errmsg
+                or "Table not found" in errmsg
+            ):
+                return []
+            else:
+                raise e
 
         return columns
 

@@ -170,19 +170,10 @@
 
 {# use describe extended for more information #}
 {% macro hive__get_columns_in_relation(relation) -%}
-  {%- set target_relation = adapter.get_relation(
-      database=relation.database,
-      schema=relation.schema,
-      identifier=relation.name)
-  -%}
-  {%- set table_exists=target_relation is not none -%}
-
-  {%- if table_exists %}
   {% call statement('get_columns_in_relation', fetch_result=True) %}
     describe formatted {{ relation }}
   {% endcall %}
   {% do return(load_result('get_columns_in_relation').table) %}
-  {%- endif -%}
 {% endmacro %}
 
 {% macro hive__list_relations_without_caching(relation) %}
@@ -279,5 +270,68 @@
      {% endif %}
   {% else %}
     {% do return('2') %}  {# assume hive 2 by default #}
+  {% endif %}
+{% endmacro %}
+
+{% macro alter_relation_add_columns(relation, add_columns = none) -%}
+  {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
+
+  {% if add_columns is none %}
+    {% set add_columns = [] %}
+  {% endif %}
+
+  {% set sql -%}
+    alter {{ relation.type }} {{ relation }}
+      add columns (
+        {%- for column in add_columns -%}
+          {{ adapter.quote_seed_column(column.name, quote_seed_column) }} {{ column.data_type  }} {{ ',' if not loop.last }}
+        {%- endfor -%}
+      );
+  {%- endset -%}
+
+  {% if (add_columns | length) > 0 %}
+    {{ return(run_query(sql)) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro alter_relation_change_columns(relation, change_columns = none) -%}
+  {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
+  {% if change_columns is none %}
+    {% set change_columns = [] %}
+  {% endif %}
+
+  {% set sql -%}
+    {%- for column in change_columns -%}
+      alter {{ relation.type }} {{ relation }}
+        change {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+          {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+          {{ column.data_type }}
+    {%- endfor -%}
+  {%- endset -%}
+
+  {% if (change_columns | length) > 0 %}
+    {{ return(run_query(sql)) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro alter_relation_replace_columns(relation, replace_columns = none) -%}
+  {%- set quote_seed_column = model['config'].get('quote_columns', None) -%}
+  {% if replace_columns is none %}
+    {% set replace_columns = [] %}
+  {% endif %}
+
+  {% set sql -%}
+      alter {{ relation.type }} {{ relation }}
+          replace columns (
+            {%- for column in replace_columns -%}
+              {{ adapter.quote_seed_column(column.name, quote_seed_column) }}
+              {{ column.data_type }}
+              {{ ', ' if not loop.last }}
+            {%- endfor -%}
+          )
+  {%- endset -%}
+
+  {% if (replace_columns | length) > 0 %}
+    {{ return(run_query(sql)) }}
   {% endif %}
 {% endmacro %}
