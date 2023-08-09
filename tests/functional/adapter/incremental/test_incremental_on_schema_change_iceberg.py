@@ -68,7 +68,7 @@ class BaseIcebergIncrementalOnSchemaChangeSetup(BaseIncrementalOnSchemaChangeSet
         }
 
 
-class BaseIcebergIncrementalOnSchemaChange(BaseIcebergIncrementalOnSchemaChangeSetup):
+class TestIcebergIncrementalOnSchemaChange(BaseIcebergIncrementalOnSchemaChangeSetup):
     def test_run_incremental_ignore(self, project):
         select = "model_a incremental_ignore incremental_ignore_target"
         compare_source = "incremental_ignore"
@@ -88,10 +88,6 @@ class BaseIcebergIncrementalOnSchemaChange(BaseIcebergIncrementalOnSchemaChangeS
         run_dbt(["run", "--models", select, "--full-refresh"])
         results_two = run_dbt(["run", "--models", select], expect_pass=False)
         assert "Compilation Error" in results_two[1].message
-
-
-class TestIcebergIncrementalOnSchemaChange(BaseIcebergIncrementalOnSchemaChange):
-    pass
 
 
 # Schema change tests for incremental merge strategy - Iceberg table format
@@ -143,7 +139,7 @@ class BaseIcebergMergeOnSchemaChangeSetup(BaseIncrementalOnSchemaChangeSetup):
         }
 
 
-class BaseIcebergMergeOnSchemaChange(BaseIcebergMergeOnSchemaChangeSetup):
+class TestIcebergMergeOnSchemaMergeChange(BaseIcebergMergeOnSchemaChangeSetup):
     def test_run_incremental_ignore(self, project):
         select = "model_a incremental_ignore incremental_ignore_target"
         compare_source = "incremental_ignore"
@@ -163,7 +159,3 @@ class BaseIcebergMergeOnSchemaChange(BaseIcebergMergeOnSchemaChangeSetup):
         run_dbt(["run", "--models", select, "--full-refresh"])
         results_two = run_dbt(["run", "--models", select], expect_pass=False)
         assert "Compilation Error" in results_two[1].message
-
-
-class TestIcebergMergeOnSchemaMergeChange(BaseIcebergMergeOnSchemaChange):
-    pass

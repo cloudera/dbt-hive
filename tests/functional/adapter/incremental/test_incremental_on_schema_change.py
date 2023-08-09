@@ -25,7 +25,7 @@ from dbt.tests.adapter.incremental.fixtures import (
 )
 
 
-class BaseIncrementalOnSchemaChange(BaseIncrementalOnSchemaChangeSetup):
+class TestIncrementalOnSchemaChange(BaseIncrementalOnSchemaChangeSetup):
     def test_run_incremental_ignore(self, project):
         select = "model_a incremental_ignore incremental_ignore_target"
         compare_source = "incremental_ignore"
@@ -41,10 +41,6 @@ class BaseIncrementalOnSchemaChange(BaseIncrementalOnSchemaChangeSetup):
         run_dbt(["run", "--models", select, "--full-refresh"])
         results_two = run_dbt(["run", "--models", select], expect_pass=False)
         assert "Compilation Error" in results_two[1].message
-
-
-class TestIncrementalOnSchemaChange(BaseIncrementalOnSchemaChange):
-    pass
 
 
 # Schema change tests for incremental merge strategy
@@ -93,7 +89,7 @@ class BaseMergeOnSchemaChangeSetup(BaseIncrementalOnSchemaChangeSetup):
         }
 
 
-class BaseMergeOnSchemaChange(BaseMergeOnSchemaChangeSetup):
+class TestMergeOnSchemaChange(BaseMergeOnSchemaChangeSetup):
     def test_run_incremental_ignore(self, project):
         select = "model_a incremental_ignore incremental_ignore_target"
         compare_source = "incremental_ignore"
@@ -109,7 +105,3 @@ class BaseMergeOnSchemaChange(BaseMergeOnSchemaChangeSetup):
         run_dbt(["run", "--models", select, "--full-refresh"])
         results_two = run_dbt(["run", "--models", select], expect_pass=False)
         assert "Compilation Error" in results_two[1].message
-
-
-class TestMergeOnSchemaChange(BaseMergeOnSchemaChange):
-    pass
