@@ -95,7 +95,7 @@ class TestIcebergIncrementalOnSchemaChange(BaseIcebergIncrementalOnSchemaChange)
 
 
 # Schema change tests for incremental merge strategy - Iceberg table format
-class BaseIcebergIncrementalOnSchemaChangeMergeSetup(BaseIncrementalOnSchemaChangeSetup):
+class BaseIcebergMergeOnSchemaChangeSetup(BaseIncrementalOnSchemaChangeSetup):
     def replace_with_iceberg(self, model):
         # Add iceberg table_type as a config parameter for existing tests
         pattern = r"(config\s*\([^)]*\))"
@@ -120,7 +120,7 @@ class BaseIcebergIncrementalOnSchemaChangeMergeSetup(BaseIncrementalOnSchemaChan
             "incremental_ignore_target.sql": self.replace_with_iceberg(
                 _MODELS__INCREMENTAL_IGNORE_TARGET
             ),
-            "incremental_fail.sql": _MODELS__INCREMENTAL_FAIL,
+            "incremental_fail.sql": self.replace_with_iceberg(_MODELS__INCREMENTAL_FAIL),
             "incremental_sync_all_columns.sql": self.replace_with_iceberg(
                 _MODELS__INCREMENTAL_SYNC_ALL_COLUMNS
             ),
@@ -143,7 +143,7 @@ class BaseIcebergIncrementalOnSchemaChangeMergeSetup(BaseIncrementalOnSchemaChan
         }
 
 
-class BaseIcebergIncrementalOnSchemaMergeChange(BaseIcebergIncrementalOnSchemaChangeMergeSetup):
+class BaseIcebergMergeOnSchemaChange(BaseIcebergMergeOnSchemaChangeSetup):
     def test_run_incremental_ignore(self, project):
         select = "model_a incremental_ignore incremental_ignore_target"
         compare_source = "incremental_ignore"
@@ -165,5 +165,5 @@ class BaseIcebergIncrementalOnSchemaMergeChange(BaseIcebergIncrementalOnSchemaCh
         assert "Compilation Error" in results_two[1].message
 
 
-class TestIcebergIncrementalOnSchemaMergeChange(BaseIcebergIncrementalOnSchemaMergeChange):
+class TestIcebergMergeOnSchemaMergeChange(BaseIcebergMergeOnSchemaChange):
     pass
