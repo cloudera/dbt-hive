@@ -10,12 +10,12 @@ The `dbt-hive` adapter allows you to use [dbt](https://www.getdbt.com/) along wi
 
 ### Credits
 
-The initial adapter code was developed by bachng2017 who agreed to transfer the ownership and continute active development.
-This code base is now being activiely developed and maintained by Cloudera.
+The initial adapter code was developed by bachng2017 who agreed to transfer the ownership and continue active development.
+This code base is now being actively developed and maintained by Cloudera.
 
 ### Requirements
 
-Current version of dbt-hive use dbt-core 1.4.*. We are actively working on supporting next version of dbt-core 1.5
+Current version of dbt-hive use dbt-core 1.4.*. We are actively working on supporting the next version of dbt-core 1.5
 
 Python >= 3.8
 dbt-core ~= 1.4.*
@@ -64,26 +64,26 @@ demo_project:
 
 ### Incremental
 
-Incremental models are explained in [dbt documentations](https://docs.getdbt.com/docs/build/incremental-models). This section covered the  details about the incremental strategy support by the dbt-hive.
+Incremental models are explained in [dbt documentation](https://docs.getdbt.com/docs/build/incremental-models). This section covered the details about the incremental strategy supported by the dbt-hive.
 
 | Strategy | ACID Table | Iceberg Table |
 |------|------|---------|
 | Incremental Full-Refresh | Yes | Yes |
 | Incremental Append | Yes | Yes |
 | Incremental Append with Partitions | Yes | Yes |
-| Incremental Insert+Overwrite | Yes | Yes|
-| Incremental Insert+Overwrite with Partitions | Yes | Yes|
+| Incremental Insert Overwrite | Yes | Yes|
+| Incremental Insert Overwrite with Partitions | Yes | Yes|
 | Incremental Merge | No | Yes |
 | Incremental Merge with Partitions | No | Yes |
 
-On-Schema Change Strategy
+Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-models#what-if-the-columns-of-my-incremental-model-change) Strategy in dbt-hive:
 
 | Strategy | ACID Table | Iceberg Table |
 |------|------|---------|
-| ignore | Suported (default)  | Supported (default) |
-| fail | Suported | Suported |
-| append_new_columns | Append new columns | Append new columns |
-| sync_all_columns | Add new columns but doesn't remove existing columns | Add new columns but doesn't remove existing columns |  
+| ignore | Supported (default)  | Supported (default) |
+| fail | Supported | Supported |
+| append_new_columns | Adds new columns | Adds new columns |
+| sync_all_columns | Adds new columns and updates datatypes but doesn't remove existing columns | Adds new columns, updates datatypes and removes existing columns  |  
 
 ### Tests Coverage
 
