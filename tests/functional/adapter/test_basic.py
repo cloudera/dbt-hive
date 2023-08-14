@@ -24,6 +24,8 @@ from dbt.tests.adapter.basic.files import (
     schema_base_yml,
 )
 
+from tests.functional.adapter.config_files import insertoverwrite_sql
+
 
 class TestSimpleMaterializationsHive(BaseSimpleMaterializations):
     """Modified Simple Materialization Hive test.
@@ -167,14 +169,6 @@ select
         'okthisis20characters' as platform
     {% endif %}
 """
-
-insertoverwrite_sql = """
-{{ config(materialized="incremental", incremental_strategy="insert_overwrite", partition_by="id_partition") }}
-select *, id as id_partition from {{ source('raw', 'seed') }}
-    {% if is_incremental() %}
-        where id > (select max(id) from {{ this }})
-    {% endif %}
-""".strip()
 
 
 class TestInsertOverwriteHive(BaseIncremental):
