@@ -53,7 +53,7 @@ demo_project:
 |Materialization: Incremental - Append with Partitions | Yes | Yes|
 |Materialization: Incremental - Insert+Overwrite| Yes | Yes |
 |Materialization: Incremental - Insert+Overwrite with Partitions | Yes | Yes |
-|Materialization: Incremental - Merge | No | No |
+|Materialization: Incremental - Merge | No | Yes |
 |Materialization: Ephemeral | No | No |
 |Seeds | Yes | Yes |
 |Tests | Yes | Yes |
