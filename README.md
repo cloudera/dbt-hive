@@ -62,7 +62,28 @@ demo_project:
 |Authentication: LDAP | Yes | Yes |
 |Authentication: Kerberos | Yes | Yes |
 
+### Incremental
 
+Incremental models are explained in [dbt documentations](https://docs.getdbt.com/docs/build/incremental-models). This section covered the  details about the incremental strategy support by the dbt-hive.
+
+| Strategy | ACID Table | Iceberg Table |
+|------|------|---------|
+| Incremental Full-Refresh | Yes | Yes |
+| Incremental Append | Yes | Yes |
+| Incremental Append with Partitions | Yes | Yes |
+| Incremental Insert+Overwrite | Yes | Yes|
+| Incremental Insert+Overwrite with Partitions | Yes | Yes|
+| Incremental Merge | No | Yes |
+| Incremental Merge with Partitions | No | Yes |
+
+On-Schema Change Strategy
+
+| Strategy | ACID Table | Iceberg Table |
+|------|------|---------|
+| ignore | Suported (default)  | Supported (default) |
+| fail | Suported | Suported |
+| append_new_columns | Append new columns | Append new columns |
+| sync_all_columns | Add new columns but doesn't remove existing columns | Add new columns but doesn't remove existing columns |  
 
 ### Tests Coverage
 
