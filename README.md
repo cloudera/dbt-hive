@@ -76,11 +76,11 @@ Incremental models are explained in [dbt documentation](https://docs.getdbt.com/
 | Incremental Merge | No | Yes |
 | Incremental Merge with Partitions | No | Yes |
 
-Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-models#what-if-the-columns-of-my-incremental-model-change) Strategy in dbt-hive:
+Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-models#what-if-the-columns-of-my-incremental-model-change) strategy in dbt-hive:
 
 | Strategy | ACID Table | Iceberg Table |
 |------|------|---------|
-| ignore | Supported (default)  | Supported (default) |
+| ignore (default)  | Supported  | Supported |
 | fail | Supported | Supported |
 | append_new_columns | Adds new columns | Adds new columns |
 | sync_all_columns | Adds new columns and updates datatypes but doesn't remove existing columns | Adds new columns, updates datatypes and removes existing columns  |  
@@ -106,4 +106,4 @@ Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-mo
 |Authentication: LDAP | Yes | Yes |
 |Authentication: Kerberos | Yes | Yes |
 
-Note: Kerberos is only qualified on Unix platform.
+**Note**: Kerberos is only qualified on Unix platform.
