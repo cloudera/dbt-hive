@@ -49,6 +49,21 @@
     {{ return(None) }}
   {% endif %}
 
+  {#-- For non-partition tables insert overwrite is not supported --#}
+  {%- set partitioned_by = config.get('partition_by') -%}
+  {%- if incremental_strategy == 'insert_overwrite' -%}
+    {%- if partitioned_by is none -%}
+      {%- do exceptions.raise_compiler_error("insert_overwrite strategy is not supported for non-partition tables") -%}
+      {{ return(None) }}
+    {%- endif -%}
+    {% set table_type = config.get('table_type') %}
+    {%- if table_type == 'iceberg' -%}
+      {%- do exceptions.raise_compiler_error("insert_overwrite strategy is not supported for iceberg tables") -%}
+      {{ return(None) }}
+    {%- endif -%}
+  {%- endif -%}
+
+
   -- the temp_ and backup_ relations should not already exist in the database; get_relation
   -- will return None in that case. Otherwise, we get a relation that we can drop
   -- later, before we try to use this name for the current operation. This has to happen before
@@ -59,14 +74,6 @@
   {% set grant_config = config.get('grants') %}
   {{ drop_relation_if_exists(preexisting_intermediate_relation) }}
   {{ drop_relation_if_exists(preexisting_backup_relation) }}
-
-  {% if strategy == 'insert_overwrite' and partition_by %}
-    {% call statement() %}
-        -- SET hive.exec.dynamic.partition=true
-        -- SET hive.exec.dynamic.partition.mode=nonstrict
-        SELECT 1
-    {% endcall %}
-  {% endif %}
 
   {{ run_hooks(pre_hooks, inside_transaction=False) }}
 

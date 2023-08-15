@@ -40,7 +40,6 @@ from tests.functional.adapter.iceberg_files import (
     incremental_iceberg_sql,
     incremental_partition_iceberg_sql,
     incremental_multiple_partition_iceberg_sql,
-    insertoverwrite_iceberg_sql,
 )
 
 
@@ -218,14 +217,5 @@ class TestIncrementalMultiplePartitionIcebergHive(BaseIncrementalForIceberg):
     def models(self):
         return {
             "incremental_test_model.sql": incremental_multiple_partition_iceberg_sql,
-            "schema.yml": schema_base_yml,
-        }
-
-
-class TestInsertOverwriteIcebergHive(BaseIncrementalForIceberg):
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {
-            "incremental_test_model.sql": insertoverwrite_iceberg_sql,
             "schema.yml": schema_base_yml,
         }
