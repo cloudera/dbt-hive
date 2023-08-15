@@ -51,8 +51,8 @@ demo_project:
 |Materialization: Table with Partitions | Yes | Yes |
 |Materialization: Incremental - Append | Yes | Yes|
 |Materialization: Incremental - Append with Partitions | Yes | Yes|
-|Materialization: Incremental - Insert+Overwrite| Yes | Yes |
-|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | Yes |
+|Materialization: Incremental - Insert+Overwrite| No | No |
+|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | No |
 |Materialization: Incremental - Merge | No | Yes |
 |Materialization: Ephemeral | No | No |
 |Seeds | Yes | Yes |
@@ -71,8 +71,8 @@ Incremental models are explained in [dbt documentation](https://docs.getdbt.com/
 | Incremental Full-Refresh | Yes | Yes |
 | Incremental Append | Yes | Yes |
 | Incremental Append with Partitions | Yes | Yes |
-| Incremental Insert Overwrite | Yes | Yes|
-| Incremental Insert Overwrite with Partitions | Yes | Yes|
+| Incremental Insert Overwrite | No | No|
+| Incremental Insert Overwrite with Partitions | Yes | No|
 | Incremental Merge | No | Yes |
 | Incremental Merge with Partitions | No | Yes |
 
