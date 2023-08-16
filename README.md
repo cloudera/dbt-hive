@@ -10,12 +10,12 @@ The `dbt-hive` adapter allows you to use [dbt](https://www.getdbt.com/) along wi
 
 ### Credits
 
-The initial adapter code was developed by bachng2017 who agreed to transfer the ownership and continute active development.
-This code base is now being activiely developed and maintained by Cloudera.
+The initial adapter code was developed by bachng2017 who agreed to transfer the ownership and continue active development.
+This code base is now being actively developed and maintained by Cloudera.
 
 ### Requirements
 
-Current version of dbt-hive use dbt-core 1.4.*. We are actively working on supporting next version of dbt-core 1.5
+Current version of dbt-hive use dbt-core 1.4.*. We are actively working on supporting the next version of dbt-core 1.5
 
 Python >= 3.8
 dbt-core ~= 1.4.*
@@ -51,9 +51,9 @@ demo_project:
 |Materialization: Table with Partitions | Yes | Yes |
 |Materialization: Incremental - Append | Yes | Yes|
 |Materialization: Incremental - Append with Partitions | Yes | Yes|
-|Materialization: Incremental - Insert+Overwrite| Yes | Yes |
-|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | Yes |
-|Materialization: Incremental - Merge | No | No |
+|Materialization: Incremental - Insert+Overwrite| No | No |
+|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | No |
+|Materialization: Incremental - Merge | No | Yes |
 |Materialization: Ephemeral | No | No |
 |Seeds | Yes | Yes |
 |Tests | Yes | Yes |
@@ -62,7 +62,28 @@ demo_project:
 |Authentication: LDAP | Yes | Yes |
 |Authentication: Kerberos | Yes | Yes |
 
+### Incremental
 
+Incremental models are explained in [dbt documentation](https://docs.getdbt.com/docs/build/incremental-models). This section covered the details about the incremental strategy supported by the dbt-hive.
+
+| Strategy | ACID Table | Iceberg Table |
+|------|------|---------|
+| Incremental Full-Refresh | Yes | Yes |
+| Incremental Append | Yes | Yes |
+| Incremental Append with Partitions | Yes | Yes |
+| Incremental Insert Overwrite | No | No|
+| Incremental Insert Overwrite with Partitions | Yes | No|
+| Incremental Merge | No | Yes |
+| Incremental Merge with Partitions | No | Yes |
+
+Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-models#what-if-the-columns-of-my-incremental-model-change) strategy in dbt-hive:
+
+| Strategy | ACID Table | Iceberg Table |
+|------|------|---------|
+| ignore (default)  | Supported  | Supported |
+| fail | Supported | Supported |
+| append_new_columns | Adds new columns | Adds new columns |
+| sync_all_columns | Adds new columns and updates datatypes but doesn't remove existing columns | Adds new columns, updates datatypes and removes existing columns  |  
 
 ### Tests Coverage
 
@@ -85,4 +106,4 @@ demo_project:
 |Authentication: LDAP | Yes | Yes |
 |Authentication: Kerberos | Yes | Yes |
 
-Note: Kerberos is only qualified on Unix platform.
+**Note**: Kerberos is only qualified on Unix platform.
