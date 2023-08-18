@@ -51,9 +51,9 @@ demo_project:
 |Materialization: Table with Partitions | Yes | Yes |
 |Materialization: Incremental - Append | Yes | Yes|
 |Materialization: Incremental - Append with Partitions | Yes | Yes|
-|Materialization: Incremental - Insert+Overwrite| No | No |
 |Materialization: Incremental - Insert+Overwrite with Partitions | Yes | No |
-|Materialization: Incremental - Merge | No | Yes |
+|Materialization: Incremental - Merge | Yes | Yes |
+|Materialization: Incremental - Merge with Partitions | No | Yes* |
 |Materialization: Ephemeral | No | No |
 |Seeds | Yes | Yes |
 |Tests | Yes | Yes |
@@ -71,10 +71,16 @@ Incremental models are explained in [dbt documentation](https://docs.getdbt.com/
 | Incremental Full-Refresh | Yes | Yes |
 | Incremental Append | Yes | Yes |
 | Incremental Append with Partitions | Yes | Yes |
-| Incremental Insert Overwrite | No | No|
-| Incremental Insert Overwrite with Partitions | Yes | No|
-| Incremental Merge | No | Yes |
-| Incremental Merge with Partitions | No | Yes |
+| Incremental Insert Overwrite | Not recommended without Partitions* | Not recommended without Partitions* |
+| Incremental Insert Overwrite with Partitions | Yes | No |
+| Incremental Merge | Yes | Yes* (only v2) |
+| Incremental Merge with Partitions | No* | Yes* (only v2) |
+
+**Note***:
+1. Incremental Insert overwrite without the partition columns results into completely overwriting the full table and may result in the data-loss. Hence it is not recommended to used. This can happen for Hive ACID, Iceberg v1 & v2 tables.
+1. Incremental Merge for iceberg v1 table is not supported because Iceberg v1 tables are not transactional.
+1. Incremental Merge with partition columns is not supported because Hive ACID tables doesn't support updating values of partition columns.
+
 
 Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-models#what-if-the-columns-of-my-incremental-model-change) strategy in dbt-hive:
 
@@ -95,8 +101,7 @@ Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-mo
 |Materialization: Table with Partitions | Yes | Yes |
 |Materialization: Incremental - Append | Yes | Yes|
 |Materialization: Incremental - Append with Partitions | Yes | Yes|
-|Materialization: Incremental - Insert+Overwrite| Yes | Yes |
-|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | Yes |
+|Materialization: Incremental - Insert+Overwrite with Partitions | Yes | No |
 |Materialization: Incremental - Merge | No | No |
 |Materialization: Ephemeral | No | No |
 |Seeds | Yes | Yes |
