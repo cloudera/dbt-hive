@@ -121,6 +121,28 @@ class TestIncrementalHive(BaseIncremental):
     pass
 
 
+class TestIncrementalFullRefreshHive(BaseIncremental):
+    def test_incremental(self, project):
+        # seed command
+        results = run_dbt(["seed"])
+
+        # run command
+        # the "seed_name" var changes the seed identifier in the schema file
+        results = run_dbt(["run", "--vars", "seed_name: base"])
+        assert len(results) == 1
+
+        # check relations equal
+        check_relations_equal(project.adapter, ["base", "incremental"])
+
+        # run full-refresh and compare with base table again
+        results = run_dbt(
+            ["run", "--select", "incremental", "--full-refresh", "--vars", "seed_name: base"]
+        )
+        assert len(results) == 1
+
+        check_relations_equal(project.adapter, ["base", "incremental"])
+
+
 incremental_single_partitionby_sql = """
  {{ config(materialized="incremental", partition_by="id_partition") }}
  select
