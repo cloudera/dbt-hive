@@ -100,8 +100,8 @@ class HiveCredentials(Credentials):
         return "hive"
 
     @property
-    def unique_field(self):
-        return f"{self.host}_{self.username}"
+    def unique_field(self) -> str:
+        return self.host
 
     def _connection_keys(self):
         return "host", "schema", "user"
