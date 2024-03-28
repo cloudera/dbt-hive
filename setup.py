@@ -77,7 +77,10 @@ setup(
         "impyla==0.18",
         "sqlparams>=3.0.0",
         "python-decouple>=3.6",
-        "protobuf>=4.0.0,<5",  # we need to freeze the version because the dbt-core backports are not cleanly done
+        # pining the protobuf version to 4.x because the dbt-core backports were messed up.
+        # more details in https://github.com/dbt-labs/dbt-core/issues/9830.
+        # TODO: remove this pin once the above issue and https://github.com/dbt-labs/dbt-core/issues/9724 is resolved.
+        "protobuf>=4.0.0,<5",
         "kerberos>=1.3.0; platform_system == 'Darwin' or platform_system == 'Linux' ",
         "winkerberos>=0.9.1; platform_system == 'Windows' ",
     ],
