@@ -45,7 +45,7 @@ def _get_dbt_core_version():
 
 package_name = "dbt-hive"
 # make sure this always matches dbt/adapters/hive/__version__.py
-package_version = "1.4.0"
+package_version = "1.5.0"
 description = """The Hive adapter plugin for dbt"""
 
 dbt_core_version = _get_dbt_core_version()
@@ -77,6 +77,10 @@ setup(
         "impyla==0.18",
         "sqlparams>=3.0.0",
         "python-decouple>=3.6",
+        # pining the protobuf version to 4.x because the dbt-core backports were messed up.
+        # more details in https://github.com/dbt-labs/dbt-core/issues/9830.
+        # TODO: remove this pin once the above issue and https://github.com/dbt-labs/dbt-core/issues/9724 is resolved.
+        "protobuf>=4.0.0,<5",
         "kerberos>=1.3.0; platform_system == 'Darwin' or platform_system == 'Linux' ",
         "winkerberos>=0.9.1; platform_system == 'Windows' ",
     ],
