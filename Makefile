@@ -29,10 +29,10 @@ dev_setup: $(VENV)/bin/activate	 ## Install all dependencies and setup pre-commi
 	$(VENV)/bin/pre-commit install
 
 test: ## Test specific version of python
-	tox --recreate -e $(PYTHON_VERSION) -- $(TESTS) --profile $(PROFILE)
+	$(VENV)/bin/tox --recreate -e $(PYTHON_VERSION) -- $(TESTS) --profile $(PROFILE)
 
 test_all_python_versions: ## Test all version of python
-	tox --recreate -- $(TESTS) --profile $(PROFILE)
+	$(VENV)/bin/tox --recreate -- $(TESTS) --profile $(PROFILE)
 
 clean: 	## Cleanup and reset development environment.
 	@echo 'cleaning virtual environment...'
