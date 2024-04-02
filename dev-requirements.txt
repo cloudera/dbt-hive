@@ -1,5 +1,7 @@
 dbt-tests-adapter==1.5.*
+nox==2024.3.2
 pre-commit~=2.21;python_version=="3.7"
 pre-commit~=3.2;python_version>="3.8"
 pytest
 pytest-dotenv
+pytest-xdist==3.5.0
