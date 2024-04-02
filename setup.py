@@ -73,7 +73,7 @@ setup(
     },
     install_requires=[
         f"dbt-core~={dbt_core_version}",
-        "setuptools>=58.2.0",
+        "setuptools>=40.3.0",
         "impyla==0.18",
         "sqlparams>=3.0.0",
         "python-decouple>=3.6",
