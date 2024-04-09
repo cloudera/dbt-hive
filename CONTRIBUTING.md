@@ -84,6 +84,31 @@ WARNING: The parameters in your `test.env` file must link to a valid Hive instan
 ### "Local" test commands
 There are a few methods for running tests locally.
 
+#### `tox`
+`tox` takes care of managing Python virtualenvs and installing dependencies in order to run tests.
+
+To Run individual test:
+```sh
+make test TESTS=tests/functional/adapter/test_basic.py::TestSimpleMaterializationsHive
+```
+
+To Run individual test for a specific python version:
+```sh
+make test TESTS=tests/functional/adapter/test_basic.py::TestSimpleMaterializationsHive PYTHON_VERSION=py38
+
+```
+
+To Run tests across all version of python:
+```sh
+make test_all_python_versions TESTS=tests/functional/adapter/test_basic.py::TestSimpleMaterializationsHive
+```
+
+The configuration of these tests are located in `tox.ini`.
+
+NOTE:
+1. Python versions for which you are running tests have to be installed on your machine manually.
+2. To configure the pytest setting, update pytest.ini. By default, all the tests run logs are captured in `logs/<test-run>/dbt.log`
+
 #### `pytest`
 You may run a specific test or group of tests using `pytest` directly or `make`. Activate a Python virtualenv active with dev dependencies installed as explained in the [installation steps](#installation). Use the appropriate profile like cdh_endpoint or dwx_endpoint. Then, run tests like so:
 
@@ -99,9 +124,6 @@ make test PROFILE=dwx_endpoint
 # run all hive functional tests in a directory
 python -m pytest tests/functional/$test_directory --profile dwx_endpoint
 python -m pytest tests/functional/adapter/test_basic.py --profile dwx_endpoint
-
-# using make run all hive functional tests in a directory
-make test TESTS=tests/functional/$test_directory
 
 # run all hive functional tests in a module
 python -m pytest --profile dwx_endpoint tests/functional/$test_dir_and_filename.py

@@ -1,18 +1,17 @@
-.DEFAULT_GOAL:=help
+.DEFAULT_GOAL := help
+PYTHON_VERSION ?= py311
 
-# define the name of the virtual environment directory
-VENV := .venv3.8.16
+# Define the name of the virtual environment directory
+VENV ?= .venv-dbt-hive
 
-# define the profile used by the dbt
-PROFILE := dwx_endpoint
+# Define the profile used by the dbt
+PROFILE ?= dwx_endpoint
 
 CHANGED_FILES := $(shell git ls-files --modified --other --exclude-standard)
 CHANGED_FILES_IN_BRANCH := $(shell git diff --name-only $(shell git merge-base origin/main HEAD))
 
-.PHONY: all install_deps dev_setup functional_test test clean help
-.PHONY: pre-commit pre-commit-in-branch pre-commit-all
-
-all: dev_setup test  ## Default target for dev setup and run tests.
+.PHONY: dev_setup test test_all_python_versions clean
+.PHONY: pre-commit pre-commit-in-branch pre-commit-all help
 
 # Required python3 already installed in the system
 $(VENV)/bin/activate:
@@ -29,11 +28,11 @@ dev_setup: $(VENV)/bin/activate	 ## Install all dependencies and setup pre-commi
 	make install_deps
 	$(VENV)/bin/pre-commit install
 
-functional_test:	## Run functional tests.
-	$(VENV)/bin/python3 -m pytest --profile $(PROFILE) $(TESTS) $(FLAGS)
+test: ## Test specific version of python
+	$(VENV)/bin/tox --recreate -e $(PYTHON_VERSION) -- $(TESTS) --profile $(PROFILE)
 
-test:  ## Run all tests.
-	@make functional_test
+test_all_python_versions: ## Test all version of python
+	$(VENV)/bin/tox --recreate -- $(TESTS) --profile $(PROFILE)
 
 clean: 	## Cleanup and reset development environment.
 	@echo 'cleaning virtual environment...'
