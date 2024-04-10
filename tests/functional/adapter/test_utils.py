@@ -594,28 +594,8 @@ class TestReplace(BaseReplace):
         }
 
 
-models__test_right_sql = """
-with util_data as (
-    select * from {{ ref('data_right') }}
-)
-select
-    {{ right('string_text', 'length_expression') }} as actual,
-    nullif(output, '') as expected
-from util_data
-"""
-
-
 class TestRight(BaseRight):
-    @pytest.fixture(scope="class")
-    def seeds(self):
-        return {"data_right.csv": seeds__data_right_csv}
-
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {
-            "test_right.yml": models__test_right_yml,
-            "test_right.sql": self.interpolate_macro_namespace(models__test_right_sql, "right"),
-        }
+    pass
 
 
 models__test_safe_cast_sql = """
