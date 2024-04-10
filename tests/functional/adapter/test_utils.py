@@ -237,32 +237,8 @@ class TestCastBoolToText(BaseCastBoolToText):
         }
 
 
-models__test_concat_sql = """
-with util_data as (
-
-    select * from {{ ref('data_concat') }}
-
-)
-
-select
-    {{ concat(['input_1', 'input_2']) }} as actual,
-    output as expected
-
-from util_data
-"""
-
-
 class TestConcat(BaseConcat):
-    @pytest.fixture(scope="class")
-    def seeds(self):
-        return {"data_concat.csv": seeds__data_concat_csv}
-
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {
-            "test_concat.yml": models__test_concat_yml,
-            "test_concat.sql": self.interpolate_macro_namespace(models__test_concat_sql, "concat"),
-        }
+    pass
 
 
 models__test_dateadd_sql = """
@@ -389,32 +365,8 @@ class TestExcept(BaseExcept):
     pass
 
 
-models__test_hash_sql = """
-with util_data as (
-
-    select * from {{ ref('data_hash') }}
-
-)
-
-select
-    {{ hash('input_1') }} as actual,
-    output as expected
-
-from util_data
-"""
-
-
 class TestHash(BaseHash):
-    @pytest.fixture(scope="class")
-    def seeds(self):
-        return {"data_hash.csv": seeds__data_hash_csv}
-
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {
-            "test_hash.yml": models__test_hash_yml,
-            "test_hash.sql": self.interpolate_macro_namespace(models__test_hash_sql, "hash"),
-        }
+    pass
 
 
 class TestIntersect(BaseIntersect):
