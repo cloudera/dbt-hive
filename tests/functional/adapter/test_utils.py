@@ -600,7 +600,7 @@ with util_data as (
 )
 select
     {{ right('string_text', 'length_expression') }} as actual,
-    coalesce(output, '') as expected
+    nullif(output, '') as expected
 from util_data
 """
 
