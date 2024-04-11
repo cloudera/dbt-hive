@@ -429,15 +429,6 @@ calculate as (
 
     select
         group_col,
-        {{ listagg('string_text', "'_|_'", "order by order_col", 2) }} as actual,
-        'bottom_ordered_limited' as version
-    from util_data
-    group by group_col
-
-    union all
-
-    select
-        group_col,
         {{ listagg('string_text', "', '") }} as actual,
         'comma_whitespace_unordered' as version
     from util_data
