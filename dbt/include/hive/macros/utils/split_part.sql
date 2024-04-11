@@ -25,12 +25,13 @@
     {% endset %}
 
     {% set split_part_expr %}
-
-    split(
-        {{ string_text }},
-        {{ delimiter_expr }}
-        )[({{ part_number - 1 }})]
-
+        coalesce(
+            split(
+                {{ string_text }},
+                {{ delimiter_expr }}
+            )[({{ part_number - 1 }})],
+            ''
+        )
     {% endset %}
 
     {{ return(split_part_expr) }}
