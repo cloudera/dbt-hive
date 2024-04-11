@@ -295,42 +295,8 @@ class TestDateAdd(BaseDateAdd):
         }
 
 
-models__test_date_trunc_sql = """
-with util_data as (
-
-    select * from {{ ref('data_date_trunc') }}
-
-)
-
-select
-    cast({{date_trunc('day', 'updated_at') }} as date) as actual,
-    day as expected
-
-from util_data
-
-union all
-
-select
-    cast({{ date_trunc('month', 'updated_at') }} as date) as actual,
-    month as expected
-
-from util_data
-"""
-
-
 class TestDateTrunc(BaseDateTrunc):
-    @pytest.fixture(scope="class")
-    def seeds(self):
-        return {"data_date_trunc.csv": seeds__data_date_trunc_csv}
-
-    @pytest.fixture(scope="class")
-    def models(self):
-        return {
-            "test_date_trunc.yml": models__test_date_trunc_yml,
-            "test_date_trunc.sql": self.interpolate_macro_namespace(
-                models__test_date_trunc_sql, "date_trunc"
-            ),
-        }
+    pass
 
 
 models__test_escape_single_quotes_quote_sql = """
