@@ -15,5 +15,24 @@
 #}
 
 {% macro hive__date_trunc(datepart, date) -%}
-    trunc({{date}}, '{{datepart}}')
+    {% set datepart_lower = datepart.lower() %}
+    {%- if datepart_lower == 'microseconds' -%}
+        date_format({{date}}, 'yyyy-MM-dd HH:mm:ss.SSSSSS')
+    {%- elif datepart_lower == 'milliseconds' -%}
+        date_format({{date}}, 'yyyy-MM-dd HH:mm:ss.SSS')
+    {%- elif datepart_lower == 'seconds' -%}
+        date_format({{date}}, 'yyyy-MM-dd HH:mm:ss')
+    {%- elif datepart_lower == 'minutes' -%}
+        date_format({{date}}, 'yyyy-MM-dd HH:mm')
+    {%- elif datepart_lower == 'hours' -%}
+        date_format({{date}}, 'yyyy-MM-dd HH:00')
+    {%- elif datepart_lower == 'day' -%}
+        date_format({{date}}, 'yyyy-MM-dd')
+    {%- elif datepart_lower == 'month' -%}
+        date_format({{date}}, 'yyyy-MM-01')
+    {%- elif datepart_lower == 'year' -%}
+        date_format({{date}}, 'yyyy-01-01')
+    {%- else -%}
+        {{ exceptions.raise_compiler_error("macro date_format not implemented for datepart ~ '" ~ datepart ~ "' ~ on Hive") }}
+    {%- endif -%}
 {%- endmacro %}
