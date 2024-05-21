@@ -65,6 +65,7 @@ class HiveCredentials(Credentials):
     use_http_transport: Optional[bool] = True
     http_path: Optional[str] = None
     kerberos_service_name: Optional[str] = None
+    krb_host: Optional[str] = None
     usage_tracking: Optional[bool] = True  # usage tracking is enabled by default
 
     _ALIASES = {"pass": "password", "user": "username"}
@@ -226,6 +227,7 @@ class HiveConnectionManager(SQLConnectionManager):
                     port=credentials.port,
                     auth_mechanism="GSSAPI",
                     kerberos_service_name=credentials.kerberos_service_name,
+                    krb_host=credentials.krb_host,
                     use_http_transport=credentials.use_http_transport,
                     use_ssl=credentials.use_ssl,
                     ca_cert=credentials.ca_cert,
