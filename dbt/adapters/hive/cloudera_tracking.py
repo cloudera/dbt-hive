@@ -23,8 +23,8 @@ import hashlib
 import threading
 from dbt.tracking import active_user
 
-from dbt.adapters.base import Credentials
-from dbt.events import AdapterLogger
+from dbt.adapters.contracts.connection import Credentials
+from dbt.adapters.events.logging import AdapterLogger
 from decouple import config
 
 

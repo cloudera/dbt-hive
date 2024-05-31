@@ -14,7 +14,7 @@
 from collections import OrderedDict
 from concurrent.futures import Future
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any, Union, Iterable
+from typing import Optional, List, Dict, Any, Union, Iterable, FrozenSet, Tuple
 import agate
 
 import dbt
@@ -23,17 +23,18 @@ import dbt.exceptions
 from dbt.adapters.base import AdapterConfig
 from dbt.adapters.base.impl import catch_as_completed
 from dbt.adapters.sql import SQLAdapter
+from dbt.adapters.contracts.relation import RelationConfig
 
 import dbt.adapters.hive.cloudera_tracking as tracker
 from dbt.adapters.hive import HiveConnectionManager
 from dbt.adapters.hive import HiveRelation
 from dbt.adapters.hive import HiveColumn
 from dbt.adapters.base import BaseRelation
-from dbt.utils import executor
+from dbt_common.utils import executor
 
-from dbt.clients import agate_helper
+from dbt_common.clients import agate_helper
 
-from dbt.events import AdapterLogger
+from dbt.adapters.events.logging import AdapterLogger
 
 logger = AdapterLogger("Hive")
 
@@ -347,9 +348,11 @@ class HiveAdapter(SQLAdapter):
         )
         return dict(properties)
 
-    def get_catalog(self, manifest):
+    def get_catalog(
+        self, relation_configs: Iterable[RelationConfig], used_schemas: FrozenSet[Tuple[str, str]]
+    ):
         """Return a catalogs that contains information of all schemas"""
-        schema_map = self._get_catalog_schemas(manifest)
+        schema_map = self._get_catalog_schemas(relation_configs)
         if len(schema_map) > 1:
             dbt.exceptions.raise_compiler_error(
                 f"Expected only one database in get_catalog, found " f"{list(schema_map)}"
@@ -361,14 +364,7 @@ class HiveAdapter(SQLAdapter):
             for info, schemas in schema_map.items():
                 for schema in schemas:
                     futures.append(
-                        tpe.submit_connected(
-                            self,
-                            schema,
-                            self._get_one_catalog,
-                            info,
-                            [schema],
-                            manifest,
-                        )
+                        tpe.submit_connected(self, schema, self._get_one_catalog, info, [schema])
                     )
             # at this point all catalogs in futures list will be merged into one
             # insides`catch_on_completed` method of the parent class
@@ -388,12 +384,7 @@ class HiveAdapter(SQLAdapter):
 
         return catalogs, exceptions
 
-    def _get_one_catalog(
-        self,
-        information_schema,
-        schemas,
-        manifest,
-    ) -> agate.Table:
+    def _get_one_catalog(self, information_schema, schemas) -> agate.Table:
         """Get ONE catalog. Used by get_catalog
 
         manifest is used to run the method in other context's
