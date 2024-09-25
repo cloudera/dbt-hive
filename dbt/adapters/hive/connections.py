@@ -17,20 +17,21 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional, Tuple
+from multiprocessing.context import SpawnContext
 
 import dbt.exceptions
 import impala.dbapi
-from dbt.adapters.base import Credentials
+from dbt.adapters.contracts.connection import Credentials
 from dbt.adapters.sql import SQLConnectionManager
-from dbt.contracts.connection import (
+from dbt.adapters.contracts.connection import (
     AdapterResponse,
     AdapterRequiredConfig,
     Connection,
     ConnectionState,
 )
-from dbt.events import AdapterLogger
-from dbt.events.functions import fire_event
-from dbt.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
+from dbt.adapters.events.logging import AdapterLogger
+from dbt_common.events.functions import fire_event
+from dbt.adapters.events.types import ConnectionUsed, SQLQuery, SQLQueryStatus
 from dbt.utils import DECIMALS
 
 import json
@@ -181,8 +182,8 @@ class HiveConnectionManager(SQLConnectionManager):
 
     hive_version = None
 
-    def __init__(self, profile: AdapterRequiredConfig):
-        super().__init__(profile)
+    def __init__(self, profile: AdapterRequiredConfig, mp_context: SpawnContext):
+        super().__init__(profile, mp_context)
         # generate profile related object for instrumentation.
         tracker.generate_profile_info(self)
 

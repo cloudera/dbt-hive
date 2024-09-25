@@ -15,10 +15,10 @@ This code base is now being actively developed and maintained by Cloudera.
 
 ### Requirements
 
-Current version of dbt-hive use dbt-core 1.7.*. We are actively working on supporting the next version of dbt-core 1.8
+Current version of dbt-hive uses dbt-core 1.8.*. We are actively working on supporting the next available version of dbt-core.
 
 Python >= 3.8
-dbt-core ~= 1.7.*
+dbt-core ~= 1.8.*
 impyla >= 0.18
 
 ### Install
