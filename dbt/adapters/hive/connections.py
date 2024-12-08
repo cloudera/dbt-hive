@@ -217,6 +217,18 @@ class HiveConnectionManager(SQLConnectionManager):
                     use_ssl=credentials.use_ssl,
                     http_path=credentials.http_path,
                 )
+            elif credentials.auth_type.upper() == "NOSASL":
+                auth_type = "nosasl"
+                hive_conn = impala.dbapi.connect(
+                    host=credentials.host,
+                    port=credentials.port,
+                    auth_mechanism="NOSASL",
+                    use_http_transport=credentials.use_http_transport,
+                    user=credentials.username,
+                    password=credentials.password,
+                    use_ssl=credentials.use_ssl,
+                    http_path=credentials.http_path,
+                )
             elif (
                 credentials.auth_type.upper() == "GSSAPI"
                 or credentials.auth_type.upper() == "KERBEROS"
