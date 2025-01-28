@@ -18,7 +18,7 @@ from typing import Optional, List, Dict, Any, Union, Iterable, FrozenSet, Tuple
 import agate
 
 import dbt
-import dbt.exceptions
+#import dbt.exceptions
 
 from dbt.adapters.base import AdapterConfig
 from dbt.adapters.base.impl import catch_as_completed
@@ -33,6 +33,7 @@ from dbt.adapters.base import BaseRelation
 from dbt_common.utils import executor
 
 from dbt_common.clients import agate_helper
+from dbt_common.exceptions import CompilationError, DbtRuntimeError
 
 from dbt.adapters.events.logging import AdapterLogger
 
@@ -105,7 +106,7 @@ class HiveAdapter(SQLAdapter):
         """Cache a new schema in dbt. It will show up in `list relations`."""
         if schema is None:
             name = self.nice_connection_name()
-            dbt.exceptions.raise_compiler_error(f"Attempted to cache a null schema for {name}")
+            CompilationError(f"Attempted to cache a null schema for {name}")
         if dbt.flags.USE_CACHE:
             self.cache.add_schema(None, schema)
         # so jinja doesn't render things
@@ -133,7 +134,7 @@ class HiveAdapter(SQLAdapter):
         try:
             result_tables = self.execute_macro("hive__list_tables_without_caching", kwargs=kwargs)
             result_views = self.execute_macro("hive__list_views_without_caching", kwargs=kwargs)
-        except dbt.exceptions.DbtRuntimeError as e:
+        except DbtRuntimeError as e:
             errmsg = getattr(e, "msg", "")
             if f"Database '{schema_relation}' not found" in errmsg:
                 return []
@@ -313,7 +314,7 @@ class HiveAdapter(SQLAdapter):
         try:
             rows: List[agate.Row] = super().get_columns_in_relation(relation)
             columns = self.parse_describe_formatted(relation, rows)
-        except dbt.exceptions.DbtRuntimeError as e:
+        except DbtRuntimeError as e:
             # impala would throw error when table doesn't exist
             errmsg = getattr(e, "msg", "")
             if (
@@ -354,7 +355,7 @@ class HiveAdapter(SQLAdapter):
         """Return a catalogs that contains information of all schemas"""
         schema_map = self._get_catalog_schemas(relation_configs)
         if len(schema_map) > 1:
-            dbt.exceptions.raise_compiler_error(
+            CompilationError(
                 f"Expected only one database in get_catalog, found " f"{list(schema_map)}"
             )
 
@@ -391,7 +392,7 @@ class HiveAdapter(SQLAdapter):
         threadself.get_columns_in_relation
         """
         if len(schemas) != 1:
-            dbt.exceptions.raise_compiler_error(
+            CompilationError(
                 f"Expected only one schema in Hive _get_one_catalog, found " f"{schemas}"
             )
 
