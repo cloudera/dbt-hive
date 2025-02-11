@@ -23,8 +23,13 @@ from dbt.tests.util import (
 )
 
 from dbt.tests.adapter.basic.test_base import BaseSimpleMaterializations
+
 from dbt.tests.adapter.basic.test_incremental import (
     BaseIncremental,
+)
+
+from dbt.tests.adapter.incremental.test_incremental_merge_exclude_columns import (
+    BaseMergeExcludeColumns,
 )
 
 from dbt.tests.adapter.basic.files import (
@@ -40,6 +45,7 @@ from tests.functional.adapter.iceberg_files import (
     incremental_iceberg_sql,
     incremental_partition_iceberg_sql,
     incremental_multiple_partition_iceberg_sql,
+    merge_iceberg_sql,
 )
 
 
@@ -201,6 +207,12 @@ class TestIncrementalIcebergHive(BaseIncrementalForIceberg):
             "incremental_test_model.sql": incremental_iceberg_sql,
             "schema.yml": schema_base_yml,
         }
+
+
+class TestMergeIcebergHive(BaseMergeExcludeColumns):
+    @pytest.fixture(scope="class")
+    def models(self):
+        return {"merge_exclude_columns.sql": merge_iceberg_sql}
 
 
 class TestIncrementalPartitionIcebergHive(BaseIncrementalForIceberg):

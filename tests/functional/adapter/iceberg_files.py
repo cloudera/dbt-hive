@@ -34,6 +34,35 @@ incremental_iceberg_sql = (
     + model_incremental
 )
 
+merge_iceberg_sql = """
+{{ config(
+    materialized = 'incremental',
+    unique_key = 'id',
+    incremental_strategy='merge',
+    merge_exclude_columns=['msg'],
+    table_type='iceberg'
+) }}
+
+{% if not is_incremental() %}
+
+-- data for first invocation of model
+
+select 1 as id, 'hello' as msg, 'blue' as color
+union all
+select 2 as id, 'goodbye' as msg, 'red' as color
+
+{% else %}
+
+-- data for subsequent incremental update
+
+select 1 as id, 'hey' as msg, 'blue' as color
+union all
+select 2 as id, 'yo' as msg, 'green' as color
+union all
+select 3 as id, 'anyway' as msg, 'purple' as color
+
+{% endif %}
+"""
 
 incremental_partition_iceberg_sql = """
  {{

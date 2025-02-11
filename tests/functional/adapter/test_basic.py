@@ -8,6 +8,9 @@ from dbt.tests.adapter.basic.test_incremental import (
     BaseIncremental,
     BaseIncrementalNotSchemaChange,
 )
+from dbt.tests.adapter.incremental.test_incremental_merge_exclude_columns import (
+    BaseMergeExcludeColumns,
+)
 from dbt.tests.adapter.basic.test_generic_tests import BaseGenericTests
 from dbt.tests.adapter.basic.test_adapter_methods import BaseAdapterMethod
 from dbt.tests.adapter.utils.base_utils import BaseUtils
@@ -203,3 +206,7 @@ class TestBaseIncrementalNotSchemaChange(BaseIncrementalNotSchemaChange):
     @pytest.fixture(scope="class")
     def models(self):
         return {"incremental_not_schema_change.sql": incremental_not_schema_change_sql}
+
+
+class TestBaseMergeExcludeColumns(BaseMergeExcludeColumns):
+    pass
