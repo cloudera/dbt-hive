@@ -20,6 +20,7 @@ from typing import Any, Optional, Tuple
 from multiprocessing.context import SpawnContext
 
 import dbt.exceptions
+from dbt_common.exceptions import DbtDatabaseError
 import impala.dbapi
 from dbt.adapters.contracts.connection import Credentials
 from dbt.adapters.sql import SQLConnectionManager
@@ -277,7 +278,7 @@ class HiveConnectionManager(SQLConnectionManager):
             )
         except HiveServer2Error as hiveError:
             logger.debug(f"Server connection error: {hiveError}")
-            raise dbt.exceptions.DbtRuntimeError(
+            raise DbtDatbaseError(
                 "Unable to establish connection to Hive server: " + str(hiveError)
             )
         except Exception as exc:
