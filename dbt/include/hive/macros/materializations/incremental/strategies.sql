@@ -98,7 +98,7 @@
   {%- if strategy == 'append' -%}
     {#-- insert new records into existing table, without updating or overwriting #}
     {{ get_insert_into_sql(source, target, dest_columns) }}
-  {%- elif strategy == 'insert_overwrite' -%}
+  {%- elif strategy == 'insert_overwrite' or strategy == 'microbatch' -%}
     {#-- insert statements don't like CTEs, so support them via a temp view #}
     {{ get_insert_overwrite_sql(source, target) }}
   {%- elif strategy == 'merge' -%}

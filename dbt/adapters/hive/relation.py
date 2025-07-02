@@ -76,3 +76,11 @@ class HiveRelation(BaseRelation):
                     "incremental_strategy": incremental_strategy,
                 }
             )
+
+    def _render_subquery_alias(self, namespace: str) -> str:
+        """Some databases require an alias for subqueries (postgres, mysql, Hive) for all others we want to avoid adding
+        an alias as it has the potential to introduce issues with the query if the user also defines an alias.
+        """
+        if self.require_alias:
+            return f" dbt_{namespace}_subq_{self.table}"
+        return ""
