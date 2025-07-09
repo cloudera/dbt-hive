@@ -82,5 +82,5 @@ class HiveRelation(BaseRelation):
         an alias as it has the potential to introduce issues with the query if the user also defines an alias.
         """
         if self.require_alias:
-            return f" dbt_{namespace}_subq_{self.table}"
+            return f"dbt_{namespace}_subq_{self.table}"
         return ""
