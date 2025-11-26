@@ -17,7 +17,7 @@
 {% macro dbt_hive_validate_get_file_format(raw_file_format) %}
   {#-- Validate the file format #}
 
-  {% set accepted_formats = ['text', 'csv', 'json', 'jdbc', 'parquet', 'orc', 'hive', 'delta', 'libsvm'] %}
+  {% set accepted_formats = ['text', 'csv', 'json', 'jdbc', 'parquet', 'orc', 'hive', 'delta', 'libsvm', 'avro'] %}
 
   {% set invalid_file_format_msg -%}
     Invalid file format provided: {{ raw_file_format }}
@@ -32,12 +32,12 @@
 {% endmacro %}
 
 
-{% macro dbt_hive_validate_get_incremental_strategy(raw_strategy, file_format) %}
+{% macro dbt_hive_validate_get_incremental_strategy(raw_strategy) %}
   {#-- Validate the incremental strategy #}
 
   {% set invalid_strategy_msg -%}
     Invalid incremental strategy provided: {{ raw_strategy }}
-    Expected one of: 'append', 'merge', 'insert_overwrite'
+    Expected one of: 'append', 'merge', 'insert_overwrite', 'microbatch'
   {%- endset %}
 
   {% set invalid_insert_overwrite_endpoint_msg -%}
@@ -46,7 +46,7 @@
     Use the 'append' or 'merge' strategy instead
   {%- endset %}
 
-  {% if raw_strategy not in ['append', 'merge', 'insert_overwrite'] %}
+  {% if raw_strategy not in ['append', 'merge', 'insert_overwrite', 'microbatch'] %}
     {% do exceptions.raise_compiler_error(invalid_strategy_msg) %}
   {%-else %}
     {% if raw_strategy == 'insert_overwrite' and target.endpoint %}
@@ -54,5 +54,20 @@
     {% endif %}
   {% endif %}
 
+  {% if raw_strategy == 'microbatch' %}
+      {{ validate_partition_key_for_microbatch_strategy() }}
+  {%- endif -%}
+
   {% do return(raw_strategy) %}
+{% endmacro %}
+
+{% macro validate_partition_key_for_microbatch_strategy() %}
+    {% set microbatch_partition_key_missing_msg -%}
+      dbt-hive 'microbatch' incremental strategy requires a `partition_by` config.
+      Ensure you are using a `partition_by` column that is of granularity {{ config.get('batch_size') }}.
+    {%- endset %}
+
+    {%- if not config.get('partition_by') -%}
+      {{ exceptions.raise_compiler_error(microbatch_partition_key_missing_msg) }}
+    {%- endif -%}
 {% endmacro %}
