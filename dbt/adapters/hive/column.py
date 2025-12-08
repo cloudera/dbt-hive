@@ -36,10 +36,6 @@ class HiveColumn(dbtClassMixin, Column):
     def translate_type(cls, dtype: str) -> str:
         return dtype
 
-    def can_expand_to(self: Self, other_column: Self) -> bool:
-        """returns True if both columns are strings"""
-        return self.is_string() and other_column.is_string()
-
     def literal(self, value):
         return f"cast({value} as {self.dtype})"
 
@@ -50,6 +46,17 @@ class HiveColumn(dbtClassMixin, Column):
     @property
     def data_type(self) -> str:
         return self.dtype
+
+    def is_string(self) -> bool:
+        dt = self.dtype.lower()
+        return dt.startswith("varchar") or dt.startswith("char") or dt == "string"
+
+    def is_integer(self) -> bool:
+        return self.dtype.lower() in ["tinyint", "smallint", "integer", "int", "bigint"]
+
+    def is_numeric(self):
+        dt = self.data_type.lower()
+        return dt in ["double", "float", "number"] or dt.startswith("decimal")
 
     def __repr__(self) -> str:
         return f"<HiveColumn {self.name} ({self.data_type})>"
