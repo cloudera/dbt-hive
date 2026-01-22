@@ -63,6 +63,7 @@ def cdh_kerberos_target():
         "port": int(os.getenv("DBT_HIVE_PORT")),
         "schema": os.getenv("DBT_HIVE_SCHEMA") or "dbt_adapter_test",
         "kerberos_service_name": os.getenv("DBT_HIVE_KERBEROS_SERVICE_NAME") or "hive",
+        "krb_host": os.getenv("DBT_HIVE_KRB_HOST") or None,
         "use_http_transport": bool(strtobool(os.getenv("DBT_HIVE_USE_HTTP_TRANSPORT") or "f")),
         "use_ssl": bool(strtobool(os.getenv("DBT_HIVE_USE_SSL") or "f")),
         "ca_cert": os.getenv("DBT_CA_CERT") or None,
