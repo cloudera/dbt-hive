@@ -74,7 +74,7 @@ setup(
     install_requires=[
         f"dbt-core~={dbt_core_version}",
         "setuptools>=40.3.0",
-        "impyla==0.18",
+        "impyla==0.22",
         "sqlparams>=3.0.0",
         "python-decouple>=3.6",
         # pining the protobuf version to 4.x because the dbt-core backports were messed up.
