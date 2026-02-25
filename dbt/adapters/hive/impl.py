@@ -105,7 +105,7 @@ class HiveAdapter(SQLAdapter):
         """Cache a new schema in dbt. It will show up in `list relations`."""
         if schema is None:
             name = self.nice_connection_name()
-            dbt.exceptions.raise_compiler_error(f"Attempted to cache a null schema for {name}")
+            dbt.exceptions.CompilationError(f"Attempted to cache a null schema for {name}")
         if dbt.flags.USE_CACHE:
             self.cache.add_schema(None, schema)
         # so jinja doesn't render things
@@ -354,7 +354,7 @@ class HiveAdapter(SQLAdapter):
         """Return a catalogs that contains information of all schemas"""
         schema_map = self._get_catalog_schemas(relation_configs)
         if len(schema_map) > 1:
-            dbt.exceptions.raise_compiler_error(
+            dbt.exceptions.CompilationError(
                 f"Expected only one database in get_catalog, found " f"{list(schema_map)}"
             )
 
@@ -391,7 +391,7 @@ class HiveAdapter(SQLAdapter):
         threadself.get_columns_in_relation
         """
         if len(schemas) != 1:
-            dbt.exceptions.raise_compiler_error(
+            dbt.exceptions.CompilationError(
                 f"Expected only one schema in Hive _get_one_catalog, found " f"{schemas}"
             )
 

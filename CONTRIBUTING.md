@@ -103,6 +103,11 @@ To Run tests across all version of python:
 make test_all_python_versions TESTS=tests/functional/adapter/test_basic.py::TestSimpleMaterializationsHive
 ```
 
+To run a specific unit test
+```
+python -m pytest tests/unit/test_exceptions.py
+```
+
 The configuration of these tests are located in `tox.ini`.
 
 NOTE:
