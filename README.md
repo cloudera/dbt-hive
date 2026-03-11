@@ -19,7 +19,7 @@ Current version of dbt-hive uses dbt-core 1.10.*. We are actively working on sup
 
 Python >= 3.9
 dbt-core ~= 1.10.*
-impyla >= 0.18
+impyla == 0.22
 
 ### Install
 ```
