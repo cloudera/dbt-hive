@@ -62,6 +62,7 @@ demo_project:
 |Documentation | Yes | No |
 |Authentication: LDAP | Yes | Yes |
 |Authentication: Kerberos | Yes | Yes |
+|Authentication: NOSASL | Yes | Yes |
 
 ### Incremental
 
