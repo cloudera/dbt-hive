@@ -212,6 +212,9 @@
   {% call statement('drop_relation_if_exists_view') %}
     drop view if exists {{ relation }}
   {% endcall %}
+  {% call statement('drop_relation_if_exists_materialized_view') %}
+    drop materialized view if exists {{ relation }}
+  {% endcall %}
 {% endmacro %}
 
 

@@ -417,7 +417,15 @@ class HiveConnectionManager(SQLConnectionManager):
             query_exception = None
             try:
                 configuration = {"paramstyle": "format"}
-                cursor.execute(sql, bindings, configuration)
+                statements = [stmt.strip() for stmt in sql.split(";") if stmt.strip()]
+                if len(statements) > 1:
+                    logger.debug(
+                        f"Detected multiple SQL statements ({len(statements)}), executing sequentially."
+                    )
+                    for stmt in statements:
+                        cursor.execute(stmt, bindings, configuration)
+                else:
+                    cursor.execute(sql, bindings, configuration)
                 query_status = str(self.get_response(cursor))
             except Exception as ex:
                 query_status = str(ex)

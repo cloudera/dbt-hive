@@ -48,6 +48,7 @@ demo_project:
 |------|-----------|---------|
 |Materialization: View | Yes | N/A |
 |Materialization: Table| Yes | Yes |
+|Materialization: Materialized View |Yes | No |
 |Materialization: Table with Partitions | Yes | Yes |
 |Materialization: Incremental - Append | Yes | Yes|
 |Materialization: Incremental - Append with Partitions | Yes | Yes|
@@ -98,6 +99,7 @@ Support for [On-Schema Change](https://docs.getdbt.com/docs/build/incremental-mo
 |------|------|---------|
 |Materialization: View | Yes | N/A |
 |Materialization: Table| Yes | Yes |
+|Materialization: Materialized View | Yes | No |
 |Materialization: Table with Partitions | Yes | Yes |
 |Materialization: Incremental - Append | Yes | Yes|
 |Materialization: Incremental - Append with Partitions | Yes | Yes|
