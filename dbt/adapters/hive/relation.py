@@ -14,6 +14,7 @@
 from typing import Optional
 
 from dataclasses import dataclass, field
+from dbt_common.dataclass_schema import StrEnum
 
 from dbt.adapters.base.relation import BaseRelation, Policy
 from dbt_common.exceptions import DbtRuntimeError
@@ -32,6 +33,13 @@ class HiveIncludePolicy(Policy):
     database: bool = False
     schema: bool = True
     identifier: bool = True
+
+
+class HiveRelationType(StrEnum):
+    Table = "table"
+    View = "view"
+    CTE = "cte"
+    MaterializedView = "materialized_view"
 
 
 @dataclass(frozen=True, eq=False, repr=False)
