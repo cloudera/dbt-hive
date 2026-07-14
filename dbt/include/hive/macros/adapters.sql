@@ -120,36 +120,80 @@
 
 {% macro hive__create_table_as(temporary, relation, sql) -%}
   {%- set _properties = config.get('tbl_properties') -%}
-  {%- set is_external = config.get('external') -%}
+  {%- set is_external = config.get('external', default=false) -%}
   {%- set table_type = config.get('table_type') -%}
+  {%- set contract_config = config.get('contract', default={'enforced': false}) -%}
+  {%- set file_format = config.get('file_format') -%}
 
-  {% if temporary -%}
+  {%- if temporary -%}
     {{ create_temporary_view(relation, sql) }}
   {%- else -%}
-    {% if config.get('file_format', validator=validation.any[basestring]) == 'delta' %}
-      create or replace table {{ relation }}
-    {% else %}
-      create {% if is_external == true -%}external{%- endif %} table {{ relation }}
-    {% endif %}
-    {{ options_clause() }}
-    {% if table_type == 'iceberg' -%}
-      {{ partition_cols(label="partitioned by spec") }}
-    {% else %}
-      {{ partition_cols(label="partitioned by") }}
-    {%- endif %}
-    {{ clustered_cols(label="clustered by") }}
-    {{ stored_by_clause(table_type) }}
-    {{ file_format_clause() }}
-    {{ location_clause() }}
-    {{ comment_clause() }}
-    {{ properties_clause(_properties) }}
-    as
-      {{ sql }}
+
+    {# -- Capture DDL clauses into a variable -- #}
+    {%- set ddl_clauses -%}
+      {{ options_clause() }}
+      {% if table_type == 'iceberg' -%}
+        {{ partition_cols(label="partitioned by spec") }}
+      {%- else -%}
+        {{ partition_cols(label="partitioned by") }}
+      {%- endif %}
+      {{ clustered_cols(label="clustered by") }}
+      {{ stored_by_clause(table_type) }}
+      {{ file_format_clause() }}
+      {{ location_clause() }}
+      {{ comment_clause() }}
+      {{ properties_clause(_properties) }}
+    {%- endset -%}
+
+    {%- if contract_config.enforced -%}
+      {# -- CASE 1: ENFORCED CONTRACT -- #}
+      {% do get_assert_columns_equivalent(sql) %}
+
+      create {% if is_external %}external{%- endif %} table {{ relation }} (
+        {%- for column_name, column_dict in model['columns'].items() -%}
+          {%- set safe_col = "`" ~ column_name ~ "`" if column_name | lower in ['from', 'to', 'all', 'select', 'table', 'order', 'group', 'by', 'where', 'limit'] else column_name -%}
+          {{ safe_col }} {{ column_dict.data_type }}
+          {%- if column_dict.constraints -%}
+            {%- for constraint in column_dict.constraints -%}
+              {%- if constraint.type == 'not_null' %} NOT NULL{%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+          {{ "," if not loop.last }}
+        {%- endfor -%}
+      )
+      {{ ddl_clauses }};
+
+      insert into {{ relation }} (
+        {%- for column_name in model['columns'].keys() -%}
+          {{ "`" ~ column_name ~ "`" if column_name | lower in ['from', 'to', 'all', 'select', 'table', 'order', 'group', 'by', 'where', 'limit'] else column_name }}{{ "," if not loop.last }}
+        {%- endfor -%}
+      )
+      {{ get_select_subquery(sql) }}
+
+    {%- else -%}
+      {# -- CASE 2: STANDARD CTAS -- #}
+      {%- set create_stmt = "create or replace table" if file_format == 'delta' else "create " ~ ("external " if is_external else "") ~ "table" -%}
+
+      {{ create_stmt }} {{ relation }}
+      {{ ddl_clauses }}
+      as
+        {{ sql }}
+    {%- endif -%}
+
   {%- endif %}
 {%- endmacro -%}
 
 
+
 {% macro hive__create_view_as(relation, sql) -%}
+  {%- set contract_config = config.get('contract') -%}
+
+  {# -- Contract enforcement -- #}
+  {%- if contract_config.enforced -%}
+    {{ get_assert_columns_equivalent(sql) }}
+    {%- set sql = get_select_subquery(sql) -%}
+  {%- endif -%}
+
   create or replace view {{ relation }}
   {{ comment_clause() }}
   as
