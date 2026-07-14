@@ -479,3 +479,7 @@ class HiveConnectionManager(SQLConnectionManager):
                     "The config '{}' is required when using the {} method"
                     " to connect to Hive".format(key, method)
                 )
+
+    @classmethod
+    def data_type_code_to_name(cls, type_code) -> str:
+        return type_code.split("(")[0].upper()
