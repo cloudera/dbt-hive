@@ -278,7 +278,7 @@ class HiveConnectionManager(SQLConnectionManager):
             )
         except HiveServer2Error as hiveError:
             logger.debug(f"Server connection error: {hiveError}")
-            raise DbtDatbaseError(
+            raise DbtDatabaseError(
                 "Unable to establish connection to Hive server: " + str(hiveError)
             )
         except Exception as exc:
