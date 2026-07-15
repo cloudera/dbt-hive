@@ -82,6 +82,7 @@ def dwx_target():
         "user": os.getenv("DBT_HIVE_USER"),
         "password": os.getenv("DBT_HIVE_PASSWORD"),
         "http_path": os.getenv("DBT_HIVE_HTTP_PATH") or "cliservice",
+        "usage_tracking": False,
     }
 
 
