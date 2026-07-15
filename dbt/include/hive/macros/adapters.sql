@@ -46,7 +46,8 @@
   {%- if raw_persist_docs is mapping -%}
     {%- set raw_relation = raw_persist_docs.get('relation', false) -%}
       {%- if raw_relation -%}
-      comment '{{ model.description | replace("'", "\\'") }}'
+       {% set escaped_description = model.description | replace("'", "\\'") | replace("\n", " ") | replace("\r", " ") | replace(";", ":")  %}
+       comment '{{ escaped_description }}'
       {% endif %}
   {%- else -%}
     {{ exceptions.raise_compiler_error("Invalid value provided for 'persist_docs'. Expected dict but got value: " ~ raw_persist_docs) }}
@@ -132,6 +133,7 @@
     {# -- Capture DDL clauses into a variable -- #}
     {%- set ddl_clauses -%}
       {{ options_clause() }}
+      {{ comment_clause() }}
       {% if table_type == 'iceberg' -%}
         {{ partition_cols(label="partitioned by spec") }}
       {%- else -%}
@@ -141,7 +143,6 @@
       {{ stored_by_clause(table_type) }}
       {{ file_format_clause() }}
       {{ location_clause() }}
-      {{ comment_clause() }}
       {{ properties_clause(_properties) }}
     {%- endset -%}
 
@@ -195,6 +196,7 @@
   {%- endif -%}
 
   create or replace view {{ relation }}
+  {{ hive__view_column_comment_list(sql) }}
   {{ comment_clause() }}
   as
     {{ sql }}
@@ -272,19 +274,62 @@
   {% endif %}
 {% endmacro %}
 
+{#
+  Executes DDL statements to alter column comments in Hive.
+  Unlike standard SQL, Hive requires re-specifying the column name and data type
+  along with the comment: ALTER TABLE/VIEW <rel> CHANGE COLUMN <col> <col> <type> COMMENT '...'.
+  (Write / DDL operation)
+#}
 {% macro hive__alter_column_comment(relation, column_dict) %}
-  {% if config.get('file_format', validator=validation.any[basestring]) == 'delta' %}
-    {% for column_name in column_dict %}
-      {% set comment = column_dict[column_name]['description'] %}
-      {% set escaped_comment = comment | replace('\'', '\\\'') %}
-      {% set comment_query %}
-        alter table {{ relation }} change column
-            {{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }}
-            comment '{{ escaped_comment }}';
-      {% endset %}
-      {% do run_query(comment_query) %}
-    {% endfor %}
+  {% set existing_cols = adapter.get_columns_in_relation(relation) %}
+  {% set type_by_name = {} %}
+  {% for col in existing_cols %}
+    {% do type_by_name.update({(col.name | lower): col.data_type}) %}
+  {% endfor %}
+  {% for column_name in column_dict %}
+    {% set col_config = column_dict[column_name] %}
+    {% set comment = col_config.get('description') %}
+    {% if comment %}
+      {% set hive_type = col_config.get('data_type') or type_by_name.get(column_name | lower) %}
+      {% if hive_type %}
+        {% set quoted_name = adapter.quote(column_name) if col_config.get('quote') else column_name %}
+        {% set escaped_comment = comment | replace("'", "\\'") | replace("\n", " ") | replace("\r", " ") | replace(";", ":") %}
+        {% set comment_query %}
+          alter {{relation.type}} {{ relation }} change column {{ quoted_name }} {{ quoted_name }} {{ hive_type }} comment '{{ escaped_comment }}'
+        {% endset %}
+        {% do run_query(comment_query) %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{#
+  Generates a list of column comment SQL expressions specifically for VIEW definitions in Hive.
+
+  Note: Native Hive does not support 'ALTER VIEW ... CHANGE COLUMN' to update
+  individual column comments after a view exists. Therefore, this macro builds
+  the column comments directly into the view creation query (CREATE VIEW ... (col COMMENT '...')).
+  (Write / DDL helper operation)
+#}
+{% macro hive__view_column_comment_list(sql) %}
+  {% if not config.persist_column_docs() or not model.columns %}
+    {{ return('') }}
   {% endif %}
+
+  {% set physical_cols = adapter.get_column_schema_from_query(sql) %}
+  (
+    {%- for col in physical_cols -%}
+      {% set col_config = model.columns.get(col.name) %}
+      {% set col_name = adapter.quote(col.name) if col_config and col_config.get('quote') else col.name %}
+      {% if col_config and col_config.get('description') %}
+        {% set escaped = col_config.get('description') | replace("'", "\\'") | replace("\n", " ") | replace("\r", " ") | replace(";", ":") %}
+        {{ col_name }} COMMENT '{{ escaped }}'
+      {% else %}
+        {{ col_name }}
+      {% endif %}
+      {%- if not loop.last -%}, {% endif -%}
+    {%- endfor -%}
+  )
 {% endmacro %}
 
 {% macro hive__list_tables_without_caching(schema) %}
