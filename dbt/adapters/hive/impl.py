@@ -225,6 +225,28 @@ class HiveAdapter(SQLAdapter):
                 unique_rows.append(row)
         return unique_rows
 
+    def _hive_describe_row_comment(self, column_row) -> Optional[str]:
+        """
+        Helper function to safely read and extract the column comment string
+        from a Hive 'DESCRIBE FORMATTED' row object. (Read-only)
+        """
+        if column_row is None:
+            return None
+        keys = getattr(column_row, "_keys", None)
+        values = getattr(column_row, "_values", None)
+        row = (
+            dict(zip(keys, values))
+            if keys is not None and values is not None
+            else dict(column_row)
+        )
+        raw = row.get("comment")
+        if raw is None:
+            raw = row.get("Comment")
+        if raw is None:
+            return None
+        text = str(raw).strip()
+        return text if text else None
+
     def parse_describe_formatted(
         self, relation: Relation, raw_rows: List[agate.Row]
     ) -> List[HiveColumn]:
@@ -277,6 +299,7 @@ class HiveAdapter(SQLAdapter):
                 column=column["col_name"],
                 column_index=idx,
                 dtype=column["data_type"],
+                comment=self._hive_describe_row_comment(column),
             )
             for idx, column in enumerate(rows)
         ]
@@ -329,17 +352,32 @@ class HiveAdapter(SQLAdapter):
         return columns
 
     def _get_columns_for_catalog(self, relation: HiveRelation) -> Iterable[Dict[str, Any]]:
-        """Get columns for catalog. Used by get_one_catalog"""
-        # columns = self.parse_columns_from_information(relation)
         columns = self.get_columns_in_relation(relation)
+        table_comment = self._table_comment_from_properties(relation)
 
         for column in columns:
-            # convert HiveColumns into catalog dicts
             as_dict = column.to_column_dict()
             as_dict["column_name"] = as_dict.pop("column", None)
             as_dict["column_type"] = as_dict.pop("dtype")
             as_dict["table_database"] = None
+            as_dict["column_comment"] = column.comment
+            as_dict["table_comment"] = table_comment
+
             yield as_dict
+
+    def _table_comment_from_properties(self, relation: HiveRelation) -> Optional[str]:
+        """
+        Helper function to extract the table-level 'comment' property
+        from Hive table properties metadata. (Read-only)
+        """
+        props = self.get_properties(relation)
+        if not props:
+            return None
+        raw = props.get("comment") or props.get("COMMENT")
+        if raw is None:
+            return None
+        text = str(raw).strip()
+        return text if text else None
 
     def get_properties(self, relation: Relation) -> Dict[str, str]:
         """ """
