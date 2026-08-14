@@ -18,7 +18,6 @@ from dbt_common.dataclass_schema import StrEnum
 
 from dbt.adapters.base.relation import BaseRelation, Policy
 from dbt_common.exceptions import DbtRuntimeError
-import dbt.adapters.hive.cloudera_tracking as tracker
 
 
 @dataclass
@@ -56,15 +55,6 @@ class HiveRelation(BaseRelation):
     def __post_init__(self):
         if self.database and self.database != self.schema:
             raise DbtRuntimeError(f"Cannot set database `{self.database}` in hive!")
-        if self.type:
-            tracker.track_usage(
-                {
-                    "event_type": tracker.TrackingEventType.MODEL_ACCESS,
-                    "model_name": self.render(),
-                    "model_type": self.type,
-                    "incremental_strategy": "",
-                }
-            )
 
     def render(self):
         if self.include_policy.database and self.include_policy.schema:
@@ -75,15 +65,7 @@ class HiveRelation(BaseRelation):
         return super().render()
 
     def log_relation(self, incremental_strategy):
-        if self.type:
-            tracker.track_usage(
-                {
-                    "event_type": tracker.TrackingEventType.INCREMENTAL,
-                    "model_name": self.render(),
-                    "model_type": self.type,
-                    "incremental_strategy": incremental_strategy,
-                }
-            )
+        pass
 
     def _render_subquery_alias(self, namespace: str) -> str:
         """Some databases require an alias for subqueries (postgres, mysql, Hive) for all others we want to avoid adding

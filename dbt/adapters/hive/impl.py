@@ -25,7 +25,6 @@ from dbt.adapters.base.impl import catch_as_completed
 from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.contracts.relation import RelationConfig
 
-import dbt.adapters.hive.cloudera_tracking as tracker
 from dbt.adapters.hive import HiveConnectionManager
 from dbt.adapters.hive import HiveRelation
 from dbt.adapters.hive import HiveColumn
@@ -464,6 +463,10 @@ class HiveAdapter(SQLAdapter):
         exists = True if schema in [row[0] for row in results] else False
         return exists
 
+    ###
+    # Overrides SQLAdapter.debug_query to also log the current user's grants
+    # for troubleshooting connection/permission issues.
+    ###
     def debug_query(self) -> None:
         self.execute("select 1 as id")
 
@@ -479,12 +482,7 @@ class HiveAdapter(SQLAdapter):
                 permissions_object.append(OrderedDict(zip(row.keys(), values)))
 
             permissions_json = permissions_object
-
-            payload = {
-                "event_type": tracker.TrackingEventType.DEBUG,
-                "permissions": permissions_json,
-            }
-            tracker.track_usage(payload)
+            logger.debug(f"User permission dump {permissions_json}")
         except Exception as ex:
             logger.debug(f"Failed to fetch permissions for user: {username}. Exception: {ex}")
             self.connections.get_thread_connection().handle.close()
