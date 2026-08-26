@@ -62,6 +62,7 @@ class HiveCredentials(Credentials):
     use_ssl: Optional[bool] = True
     ca_cert: Optional[str] = None
     use_http_transport: Optional[bool] = True
+    jwt: Optional[str] = None
     http_path: Optional[str] = None
     kerberos_service_name: Optional[str] = None
 
@@ -214,6 +215,16 @@ class HiveConnectionManager(SQLConnectionManager):
                     use_http_transport=credentials.use_http_transport,
                     use_ssl=credentials.use_ssl,
                     ca_cert=credentials.ca_cert,
+                )
+            elif credentials.auth_type and credentials.auth_type.lower() == "jwt":
+                hive_conn = impala.dbapi.connect(
+                    host=credentials.host,
+                    port=credentials.port,
+                    auth_mechanism="JWT",
+                    jwt=credentials.jwt,
+                    use_http_transport=True,  # required by impyla for JWT
+                    use_ssl=credentials.use_ssl,
+                    http_path=credentials.http_path,
                 )
             else:
                 raise dbt.exceptions.DbtProfileError(
