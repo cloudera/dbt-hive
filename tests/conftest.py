@@ -98,7 +98,7 @@ def jwt_target():
         "port": int(os.getenv("DBT_HIVE_PORT")),
         "schema": os.getenv("IMPALA_SCHEMA") or "dbt_adapter_test",
         "user": os.getenv("DBT_HIVE_USER"),
-        "jwt": os.getenv("IMPALA_JWT"),
+        "jwt": os.getenv("HIVE_JWT"),
         "http_path": os.getenv("IMPALA_HTTP_PATH") or "cliservice",
     }
 
