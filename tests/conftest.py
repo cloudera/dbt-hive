@@ -36,6 +36,8 @@ def dbt_profile_target(request):
         target = dwx_target()
     elif profile_type == "local_endpoint":
         target = local_target()
+    elif profile_type == "jwt_endpoint":
+        target = jwt_target()
     else:
         raise ValueError(f"Invalid profile type '{profile_type}'")
     return target
@@ -82,6 +84,22 @@ def dwx_target():
         "user": os.getenv("DBT_HIVE_USER"),
         "password": os.getenv("DBT_HIVE_PASSWORD"),
         "http_path": os.getenv("DBT_HIVE_HTTP_PATH") or "cliservice",
+    }
+
+
+def jwt_target():
+    return {
+        "type": "hive",
+        "threads": 4,
+        "auth_type": "jwt",
+        "use_http_transport": True,
+        "use_ssl": True,
+        "host": os.getenv("DBT_HIVE_HOST"),
+        "port": int(os.getenv("DBT_HIVE_PORT")),
+        "schema": os.getenv("IMPALA_SCHEMA") or "dbt_adapter_test",
+        "user": os.getenv("DBT_HIVE_USER"),
+        "jwt": os.getenv("HIVE_JWT"),
+        "http_path": os.getenv("IMPALA_HTTP_PATH") or "cliservice",
     }
 
 
