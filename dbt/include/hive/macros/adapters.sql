@@ -278,6 +278,11 @@
   Executes DDL statements to alter column comments in Hive.
   Unlike standard SQL, Hive requires re-specifying the column name and data type
   along with the comment: ALTER TABLE/VIEW <rel> CHANGE COLUMN <col> <col> <type> COMMENT '...'.
+
+  Partition columns are not part of the regular column list as far as Hive's DDL is
+  concerned, and `CHANGE COLUMN` rejects them (e.g. "Partition column cannot be changed").
+  Their comment has to be set via the dedicated
+  `ALTER TABLE <rel> PARTITION COLUMN (<col> <type> COMMENT '...')` syntax instead.
   (Write / DDL operation)
 #}
 {% macro hive__alter_column_comment(relation, column_dict) %}
@@ -286,6 +291,16 @@
   {% for col in existing_cols %}
     {% do type_by_name.update({(col.name | lower): col.data_type}) %}
   {% endfor %}
+
+  {% set raw_partition_cols = config.get('partition_by', validator=validation.any[list, basestring]) %}
+  {% if raw_partition_cols is none %}
+    {% set partition_col_names = [] %}
+  {% elif raw_partition_cols is string %}
+    {% set partition_col_names = [raw_partition_cols | lower] %}
+  {% else %}
+    {% set partition_col_names = raw_partition_cols | map('lower') | list %}
+  {% endif %}
+
   {% for column_name in column_dict %}
     {% set col_config = column_dict[column_name] %}
     {% set comment = col_config.get('description') %}
@@ -294,9 +309,15 @@
       {% if hive_type %}
         {% set quoted_name = adapter.quote(column_name) if col_config.get('quote') else column_name %}
         {% set escaped_comment = comment | replace("'", "\\'") | replace("\n", " ") | replace("\r", " ") | replace(";", ":") %}
-        {% set comment_query %}
-          alter {{relation.type}} {{ relation }} change column {{ quoted_name }} {{ quoted_name }} {{ hive_type }} comment '{{ escaped_comment }}'
-        {% endset %}
+        {% if (column_name | lower) in partition_col_names %}
+          {% set comment_query %}
+            alter table {{ relation }} partition column ({{ quoted_name }} {{ hive_type }} comment '{{ escaped_comment }}')
+          {% endset %}
+        {% else %}
+          {% set comment_query %}
+            alter {{relation.type}} {{ relation }} change column {{ quoted_name }} {{ quoted_name }} {{ hive_type }} comment '{{ escaped_comment }}'
+          {% endset %}
+        {% endif %}
         {% do run_query(comment_query) %}
       {% endif %}
     {% endif %}
