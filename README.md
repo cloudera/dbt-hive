@@ -15,7 +15,7 @@ This code base is now being actively developed and maintained by Cloudera.
 
 ### Requirements
 
-Current version of dbt-hive uses dbt-core 1.11.*. We are actively working on supporting the next available version of dbt-core.
+Current version of dbt-hive uses dbt-core 1.12.*. We are actively working on supporting the next available version of dbt-core.
 
 Python >= 3.10
 dbt-core ~= 1.12.*
